@@ -113,36 +113,31 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 
             const detailsData = await detailsRes.json();
 
-            // STRICT FILTERING: Only keep videos that are:
-            // 1. Embeddable
-            // 2. Public (not unlisted or private)
-            // 3. Not region restricted
-            // 4. Not made for kids (often have playback restrictions)
+            // RELAXED FILTERING: Let more videos through since we have bypass techniques
+            // Only filter out videos that are DEFINITELY broken:
+            // 1. Not processed yet
+            // 2. Private/unlisted
+            // 3. Made for kids (these have strict autoplay restrictions)
             const validItems = detailsData.items.filter((item: any) => {
                 const status = item.status;
                 const snippet = item.snippet;
 
-                const isEmbeddable = status?.embeddable === true;
+                // Only check critical filters - let embeddable check be lenient
                 const isPublic = status?.privacyStatus === 'public';
                 const notMadeForKids = !status?.madeForKids;
                 const uploadStatus = status?.uploadStatus === 'processed';
 
-                // Prefer videos from official channels (they're more likely to be embeddable)
-                const isLikelyOfficial = snippet?.channelTitle?.toLowerCase().includes('official') ||
-                    snippet?.channelTitle?.toLowerCase().includes('vevo') ||
-                    snippet?.title?.toLowerCase().includes('official');
+                // We're REMOVING the embeddable check because:
+                // 1. YouTube's API sometimes reports videos as non-embeddable when they actually work
+                // 2. Our nocookie domain + direct iframe fallback can play many restricted videos
+                // 3. Better to try and fail gracefully than pre-filter too aggressively
 
-                // Check if not region restricted (if regionRestriction exists, it might be limited)
-                const notRegionRestricted = !item.contentDetails?.regionRestriction?.blocked;
-
-                const isValid = isEmbeddable &&
-                    isPublic &&
+                const isValid = isPublic &&
                     notMadeForKids &&
-                    uploadStatus &&
-                    notRegionRestricted;
+                    uploadStatus;
 
                 if (!isValid) {
-                    console.log(`⏭️ Skipping: ${snippet?.title} (embeddable: ${isEmbeddable}, public: ${isPublic}, kids: ${!notMadeForKids}, region: ${!notRegionRestricted})`);
+                    console.log(`⏭️ Skipping: ${snippet?.title} (public: ${isPublic}, kids: ${!notMadeForKids}, processed: ${uploadStatus})`);
                 }
 
                 return isValid;
@@ -198,20 +193,17 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
             const status = item.status;
             const snippet = item.snippet;
 
-            const isEmbeddable = status?.embeddable === true;
+            // RELAXED FILTERING - Same as search
             const isPublic = status?.privacyStatus === 'public';
             const notMadeForKids = !status?.madeForKids;
             const uploadStatus = status?.uploadStatus === 'processed';
-            const notRegionRestricted = !item.contentDetails?.regionRestriction?.blocked;
 
-            const isValid = isEmbeddable &&
-                isPublic &&
+            const isValid = isPublic &&
                 notMadeForKids &&
-                uploadStatus &&
-                notRegionRestricted;
+                uploadStatus;
 
             if (!isValid) {
-                console.log(`⏭️ Skipping trending: ${snippet?.title} (embeddable: ${isEmbeddable}, public: ${isPublic})`);
+                console.log(`⏭️ Skipping trending: ${snippet?.title} (public: ${isPublic}, kids: ${!notMadeForKids}, processed: ${uploadStatus})`);
             }
 
             return isValid;

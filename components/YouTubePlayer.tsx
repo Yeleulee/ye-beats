@@ -114,12 +114,51 @@ export const YouTubePlayer: React.FC = () => {
                 // Already loaded, just play
                 playerRef.current.playVideo();
             } else {
-                // Load new
-                playerRef.current.loadVideoById(videoId);
+                // BYPASS TECHNIQUE #4: Load with enhanced parameters
+                // Use loadVideoById with object parameter for more control
+                playerRef.current.loadVideoById({
+                    videoId: videoId,
+                    startSeconds: 0,
+                    suggestedQuality: 'default',
+                });
+
+                console.log(`🎵 Loading video: ${videoId} with bypass parameters`);
             }
         } catch (e) {
             console.error("Playback failed", e);
+
+            // FALLBACK: Try creating a direct iframe embed as last resort
+            tryDirectIframeEmbed(videoId);
         }
+    };
+
+    // Emergency fallback: Direct iframe embedding
+    const tryDirectIframeEmbed = (videoId: string) => {
+        console.log('🔧 Attempting direct iframe embed fallback...');
+        const mountElement = document.getElementById('youtube-player-mount');
+        if (!mountElement) return;
+
+        // Destroy the existing API player
+        if (playerRef.current && playerRef.current.destroy) {
+            playerRef.current.destroy();
+            playerRef.current = null;
+            isReadyRef.current = false;
+        }
+
+        // Create a direct iframe with aggressive parameters
+        mountElement.innerHTML = `
+            <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&controls=0&showinfo=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&widgetid=1"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                style="width: 100%; height: 100%;"
+            ></iframe>
+        `;
+
+        console.log('✅ Direct iframe embed created');
     };
 
     const onPlayerError = (event: any) => {
@@ -140,32 +179,71 @@ export const YouTubePlayer: React.FC = () => {
             };
 
             console.error(`YouTube Error ${errorCode}: ${errorMessages[errorCode]}`);
+
+            // BYPASS TECHNIQUE #3: Try to reload with different parameters
+            // Sometimes reloading works on the second attempt
+            if (!sessionStorage.getItem(`retry_${currentSong?.youtubeId}`)) {
+                console.log('🔄 Attempting to reload video with alternative parameters...');
+                sessionStorage.setItem(`retry_${currentSong?.youtubeId}`, 'true');
+
+                // Wait a moment then try again
+                setTimeout(() => {
+                    if (currentSong?.youtubeId && playerRef.current) {
+                        playerRef.current.loadVideoById({
+                            videoId: currentSong.youtubeId,
+                            startSeconds: 0,
+                            suggestedQuality: 'default'
+                        });
+                    }
+                }, 1000);
+                return;
+            }
+
+            // If retry didn't work, mark as failed
+            sessionStorage.removeItem(`retry_${currentSong?.youtubeId}`);
             setPlaying(false);
 
-            // Show enhanced visual error indicator with better styling
+            // Show LESS INTRUSIVE error indicator with auto-dismiss
             if (containerRef.current) {
                 const existing = containerRef.current.querySelector('.yt-error-overlay');
                 if (existing) existing.remove();
 
                 const errorMsg = document.createElement('div');
-                errorMsg.className = 'yt-error-overlay absolute inset-0 flex flex-col items-center justify-center text-white text-center px-6 bg-gradient-to-br from-red-900/80 via-red-800/70 to-black/90 backdrop-blur-xl z-50 rounded-xl border border-red-500/30';
+                errorMsg.className = 'yt-error-overlay fixed top-20 left-1/2 -translate-x-1/2 z-[100] animate-[slideDown_0.3s_ease-out]';
                 errorMsg.innerHTML = `
-                    <div class="text-6xl mb-4 animate-bounce">⚠️</div>
-                    <p class="text-lg font-bold mb-2">${errorMessages[errorCode] || 'Playback error'}</p>
-                    <p class="text-sm text-white/70 mb-4">This song can't be played due to YouTube restrictions</p>
-                    <div class="px-4 py-2 bg-white/10 rounded-lg border border-white/20">
-                        <p class="text-xs text-white/60">Try searching for another version or song</p>
+                    <div class="bg-gradient-to-r from-red-500/90 to-pink-500/90 backdrop-blur-xl px-6 py-4 rounded-2xl shadow-2xl border border-white/20 max-w-md">
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl">🚫</div>
+                            <div class="flex-1">
+                                <p class="text-white font-bold text-sm">${errorMessages[errorCode]}</p>
+                                <p class="text-white/80 text-xs mt-1">Try another song or search for a different version</p>
+                            </div>
+                        </div>
                     </div>
                 `;
+
+                // Add animation styles
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes slideDown {
+                        from { transform: translate(-50%, -100%); opacity: 0; }
+                        to { transform: translate(-50%, 0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+
                 containerRef.current.appendChild(errorMsg);
 
-                // Auto-remove after 6 seconds
+                // Auto-remove after 4 seconds with fade out
                 setTimeout(() => {
                     errorMsg.style.opacity = '0';
-                    errorMsg.style.transform = 'scale(0.9)';
-                    errorMsg.style.transition = 'all 0.5s ease-out';
-                    setTimeout(() => errorMsg.remove(), 500);
-                }, 6000);
+                    errorMsg.style.transform = 'translate(-50%, -20px)';
+                    errorMsg.style.transition = 'all 0.3s ease-out';
+                    setTimeout(() => {
+                        errorMsg.remove();
+                        style.remove();
+                    }, 300);
+                }, 4000);
             }
         }
     };
