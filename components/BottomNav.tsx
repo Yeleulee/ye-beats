@@ -16,8 +16,8 @@ export const BottomNav: React.FC<Props> = ({ currentTab, onTabChange }) => {
   ];
 
   return (
-    <div 
-      className="fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around border-t border-white/10 z-40 backdrop-blur-md"
+    <div
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-screen-xl h-16 flex items-center justify-around border-t border-white/10 z-40 backdrop-blur-md"
       style={{ backgroundColor: THEME.navBar }}
     >
       {navItems.map((item) => {
@@ -29,12 +29,12 @@ export const BottomNav: React.FC<Props> = ({ currentTab, onTabChange }) => {
             onClick={() => onTabChange(item.id)}
             className="flex flex-col items-center justify-center w-full h-full space-y-1"
           >
-            <Icon 
-              size={24} 
-              color={isActive ? THEME.text : THEME.textSecondary} 
+            <Icon
+              size={24}
+              color={isActive ? THEME.text : THEME.textSecondary}
               fill={isActive ? THEME.text : 'none'}
             />
-            <span 
+            <span
               className="text-[10px] font-medium"
               style={{ color: isActive ? THEME.text : THEME.textSecondary }}
             >

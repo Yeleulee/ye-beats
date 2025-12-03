@@ -11,6 +11,9 @@ import { Library } from './pages/Library';
 import { Explore } from './pages/Explore';
 import { Tab } from './types';
 
+import { Sidebar } from './components/Sidebar';
+import { DesktopPlayer } from './components/DesktopPlayer';
+
 const AppContent = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.HOME);
   const [previousTab, setPreviousTab] = useState<Tab>(Tab.HOME);
@@ -43,25 +46,38 @@ const AppContent = () => {
   };
 
   return (
-    <div className="bg-black min-h-screen text-white overflow-hidden relative selection:bg-red-500 selection:text-white">
-      {/* Audio Engine */}
-      <YouTubePlayer />
+    <div className="bg-black min-h-screen text-white overflow-hidden relative selection:bg-red-500 selection:text-white flex">
+      {/* Audio Engine moved to FullPlayer */}
+
+      {/* Desktop Sidebar - Hidden on Mobile */}
+      <div className="hidden md:block">
+        <Sidebar currentTab={activeTab} onTabChange={handleTabChange} />
+      </div>
 
       {/* Main Content Area */}
-      <main className="h-full overflow-y-auto no-scrollbar bg-[#121212]">
-        {renderScreen()}
+      <main className="flex-1 h-screen overflow-y-auto no-scrollbar bg-[#121212] md:ml-64 relative">
+        <div className="max-w-screen-2xl mx-auto min-h-full pb-32 md:pb-28">
+          {renderScreen()}
+        </div>
       </main>
 
       {/* Overlays */}
       <FullPlayer />
 
-      {/* Bottom Interface */}
-      {activeTab !== Tab.SEARCH && (
-        <>
-          <MiniPlayer />
-          <BottomNav currentTab={activeTab} onTabChange={handleTabChange} />
-        </>
-      )}
+      {/* Desktop Player - Hidden on Mobile */}
+      <div className="hidden md:block">
+        <DesktopPlayer />
+      </div>
+
+      {/* Mobile Interface - Hidden on Desktop */}
+      <div className="md:hidden">
+        {activeTab !== Tab.SEARCH && (
+          <>
+            <MiniPlayer />
+            <BottomNav currentTab={activeTab} onTabChange={handleTabChange} />
+          </>
+        )}
+      </div>
     </div>
   );
 };

@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { PlayerState, Song } from '../types';
 
 interface PlayerContextType extends PlayerState {
-  playSong: (song: Song) => void;
+  playSong: (song: Song, newQueue?: Song[]) => void;
   togglePlay: () => void;
   minimizePlayer: () => void;
   maximizePlayer: () => void;
@@ -17,6 +17,9 @@ interface PlayerContextType extends PlayerState {
   toggleVideoMode: () => void;
   toggleLyrics: () => void;
   setLyricsVisible: (visible: boolean) => void;
+  addToQueue: (song: Song) => void;
+  playNext: () => void;
+  playPrevious: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -36,15 +39,47 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const [volume, setVolume] = useState(100);
 
-  const playSong = (song: Song) => {
+  const playSong = (song: Song, newQueue?: Song[]) => {
     setState(prev => ({
       ...prev,
       currentSong: song,
       isPlaying: true,
-      isMinimized: false, // Auto open full player
+      isMinimized: false,
       progress: 0,
-      seekRequest: 0, // Reset position
-      // Keep previous video mode or reset? Let's keep it for continuity
+      seekRequest: 0,
+      queue: newQueue || prev.queue, // Use new queue if provided, else keep existing
+    }));
+  };
+
+  const addToQueue = (song: Song) => {
+    setState(prev => ({
+      ...prev,
+      queue: [...prev.queue, song]
+    }));
+  };
+
+  const playNext = () => {
+    setState(prev => {
+      if (prev.queue.length === 0) return prev;
+      const nextSong = prev.queue[0];
+      const newQueue = prev.queue.slice(1);
+      return {
+        ...prev,
+        currentSong: nextSong,
+        queue: newQueue,
+        progress: 0,
+        seekRequest: 0,
+        isPlaying: true,
+      };
+    });
+  };
+
+  const playPrevious = () => {
+    // For now, just restart the song if > 3 seconds, otherwise we need history tracking
+    setState(prev => ({
+      ...prev,
+      seekRequest: 0,
+      progress: 0
     }));
   };
 
@@ -108,7 +143,10 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setVolume,
       toggleVideoMode,
       toggleLyrics,
-      setLyricsVisible
+      setLyricsVisible,
+      addToQueue,
+      playNext,
+      playPrevious
     }}>
       {children}
     </PlayerContext.Provider>

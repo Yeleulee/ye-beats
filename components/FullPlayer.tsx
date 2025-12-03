@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Play, Pause, SkipBack, SkipForward, MoreHorizontal, MessageSquareQuote, ListMusic, Volume2, Volume1, VolumeX, Loader2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { fetchLyrics, LyricLine } from '../services/lyricsService';
+import { YouTubePlayer } from './YouTubePlayer';
 
 // Helper for formatting seconds
 const formatTime = (seconds: number) => {
@@ -28,11 +29,15 @@ export const FullPlayer: React.FC = () => {
         toggleVideoMode,
         isLyricsVisible,
         toggleLyrics,
-        setLyricsVisible
+        setLyricsVisible,
+        queue,
+        playNext,
+        playPrevious
     } = usePlayer();
 
     const [lyrics, setLyrics] = useState<LyricLine[]>([]);
     const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
+    const [isQueueVisible, setIsQueueVisible] = useState(false);
 
     // Scrubber State
     const [isScrubbing, setIsScrubbing] = useState(false);
@@ -45,6 +50,7 @@ export const FullPlayer: React.FC = () => {
     useEffect(() => {
         setLyrics([]);
         setLyricsVisible(false);
+        setIsQueueVisible(false);
     }, [currentSong?.id]);
 
     // Manual fetch function
@@ -87,6 +93,16 @@ export const FullPlayer: React.FC = () => {
         }
     }, [activeLineIndex, isLyricsVisible]);
 
+    const handleToggleLyrics = () => {
+        if (isQueueVisible) setIsQueueVisible(false);
+        toggleLyrics();
+    };
+
+    const handleToggleQueue = () => {
+        if (isLyricsVisible) setLyricsVisible(false);
+        setIsQueueVisible(!isQueueVisible);
+    };
+
     if (!currentSong) return null;
 
     const currentDuration = duration || 1; // Prevent div by zero
@@ -112,10 +128,12 @@ export const FullPlayer: React.FC = () => {
 
     const VolumeIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
 
+    const isSideViewVisible = isLyricsVisible || isQueueVisible;
+
     return (
         <div
             className={`fixed inset-0 z-[60] flex flex-col transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) ${isMinimized ? 'translate-y-[100vh]' : 'translate-y-0'}`}
-            style={{ height: '100dvh' }} // Use dynamic viewport height for mobile browsers
+            style={{ height: '100dvh' }}
         >
             {/* Dynamic Animated Background */}
             <div className="absolute inset-0 bg-[#1c1c1e] overflow-hidden">
@@ -130,22 +148,12 @@ export const FullPlayer: React.FC = () => {
                         animation: isPlaying ? 'breathe 10s infinite alternate' : 'none'
                     }}
                 ></div>
-                <div
-                    className="absolute inset-0 opacity-40 mix-blend-overlay transition-all duration-[5000ms] ease-in-out"
-                    style={{
-                        backgroundImage: `url(${currentSong.coverUrl})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                        filter: 'blur(100px) hue-rotate(30deg)',
-                        transform: isPlaying ? 'scale(2.0) rotate(-10deg) translate(20px, 20px)' : 'scale(1.5) rotate(0deg)',
-                    }}
-                ></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50"></div>
+                <div className="absolute inset-0 bg-black/40 backdrop-blur-3xl"></div>
             </div>
 
-            {/* Header with Switch */}
-            <div className="relative z-10 flex items-center justify-between px-6 pt-safe-top mt-4 pb-2 shrink-0">
-                <div className="p-2 cursor-pointer rounded-full active:bg-white/10" onClick={minimizePlayer}>
+            {/* Header */}
+            <div className="relative z-10 flex items-center justify-between px-6 pt-safe-top mt-4 pb-2 shrink-0 max-w-screen-xl mx-auto w-full">
+                <div className="p-2 cursor-pointer rounded-full active:bg-white/10 hover:bg-white/5 transition" onClick={minimizePlayer}>
                     <ChevronDown size={28} className="text-white" />
                 </div>
 
@@ -170,117 +178,166 @@ export const FullPlayer: React.FC = () => {
                 </button>
             </div>
 
-            {/* Main Content Area */}
-            <div className="relative z-10 flex-1 flex flex-col px-6 pb-8 overflow-hidden justify-between">
+            {/* Main Content - Responsive Layout */}
+            <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center px-6 md:px-12 pb-8 gap-8 md:gap-16 overflow-hidden max-w-screen-2xl mx-auto w-full">
 
-                {/* View Switcher: Album Art / Video / Lyrics */}
-                <div className="flex-1 flex items-center justify-center relative min-h-0 w-full py-2">
+                {/* Left Side: Album Art / Video */}
+                <div className={`relative w-full max-w-[340px] md:max-w-[500px] aspect-square flex items-center justify-center transition-all duration-500 ${isSideViewVisible ? 'md:w-1/2 md:scale-90' : 'md:w-full'}`}>
 
-                    {/* Album Art View */}
-                    <div
-                        className={`relative w-full max-w-[340px] aspect-square transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) flex items-center justify-center ${isLyricsVisible || videoMode
-                            ? 'opacity-0 scale-75 blur-md absolute pointer-events-none translate-y-10'
-                            : 'opacity-100 scale-100 translate-y-0'
-                            }`}
-                    >
+                    {/* Album Art */}
+                    <div className={`relative w-full h-full transition-all duration-700 ${videoMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                         <img
                             src={currentSong.coverUrl}
                             alt={currentSong.title}
-                            className={`w-full h-full rounded-2xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] object-cover transition-transform duration-700 ${isPlaying ? 'scale-100' : 'scale-[0.9] opacity-80'}`}
-                            style={{ maxHeight: '45vh' }} // Constraint for small screens
+                            className={`w-full h-full rounded-2xl md:rounded-3xl shadow-[0_25px_50px_-12px_rgba(0,0,0,0.6)] object-cover transition-transform duration-700 ${isPlaying ? 'scale-100' : 'scale-[0.9] opacity-80'}`}
                         />
                     </div>
 
-                    {/* Placeholder for Video Mode (Matches YouTubePlayer position logic roughly) */}
-                    <div
-                        className={`absolute inset-0 flex items-center justify-center transition-all duration-500 pointer-events-none ${videoMode && !isLyricsVisible ? 'opacity-100' : 'opacity-0'}`}
-                    >
-                        {/* The YouTubePlayer component in App.tsx is fixed positioned over this area */}
-                    </div>
-
-                    {/* Lyrics View */}
-                    <div
-                        ref={lyricsContainerRef}
-                        className={`absolute inset-0 overflow-y-auto no-scrollbar transition-all duration-700 flex flex-col items-start pt-[50%] pb-[50%] px-2 space-y-9 ${isLyricsVisible ? 'opacity-100 z-20 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95 translate-y-8'
-                            }`}
-                        style={{
-                            maskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)',
-                            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)'
-                        }}
-                    >
-                        {isLoadingLyrics ? (
-                            <div className="flex flex-col items-center justify-center w-full h-full">
-                                <Loader2 className="w-12 h-12 text-white/60 animate-spin" />
-                                <p className="text-white/40 mt-4 text-sm">Loading lyrics...</p>
-                            </div>
-                        ) : lyrics.length > 0 ? (
-                            lyrics.map((line, index) => {
-                                const isActive = index === activeLineIndex;
-                                return (
-                                    <p
-                                        key={index}
-                                        className={`text-[28px] font-bold leading-tight tracking-tight transition-all duration-500 ease-out origin-left cursor-pointer py-2 ${isActive
-                                            ? 'text-white scale-105 blur-none opacity-100 translate-x-4'
-                                            : 'text-white/40 scale-100 blur-[2px] opacity-30 hover:opacity-70 hover:blur-none'
-                                            }`}
-                                        onClick={() => seekTo(line.timestamp)}
-                                    >
-                                        {line.text}
-                                    </p>
-                                );
-                            })
-                        ) : (
-                            <div className="flex items-center justify-center w-full h-full">
-                                <p className="text-white/40 text-lg">No lyrics available</p>
-                            </div>
-                        )}
+                    {/* YouTube Player Embed */}
+                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 overflow-hidden rounded-2xl md:rounded-3xl ${videoMode ? 'opacity-100 z-10' : 'opacity-0 z-[-1] pointer-events-none'}`}>
+                        <YouTubePlayer />
                     </div>
                 </div>
 
-                {/* Player Controls Container - Shrinkable but content stays fixed size */}
-                <div className={`flex flex-col gap-2 sm:gap-4 mt-auto shrink-0 transition-opacity duration-300 ${isLyricsVisible ? 'bg-black/20 backdrop-blur-xl -mx-6 px-6 py-6 rounded-t-3xl border-t border-white/5' : ''}`}>
+                {/* Right Side: Lyrics OR Queue (Desktop) or Overlay (Mobile) */}
+                <div
+                    className={`
+                        absolute md:relative inset-0 md:inset-auto
+                        flex flex-col
+                        transition-all duration-500
+                        ${isSideViewVisible
+                            ? 'opacity-100 z-20 translate-y-0 md:w-1/2 md:h-[60vh]'
+                            : 'opacity-0 pointer-events-none translate-y-10 md:w-0 md:hidden'
+                        }
+                    `}
+                >
+                    {/* Lyrics View */}
+                    {isLyricsVisible && (
+                        <div
+                            ref={lyricsContainerRef}
+                            className="w-full h-full overflow-y-auto no-scrollbar md:pr-4 mask-linear-fade"
+                            style={{
+                                maskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)',
+                                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)'
+                            }}
+                        >
+                            {isLoadingLyrics ? (
+                                <div className="flex flex-col items-center justify-center w-full h-full min-h-[300px]">
+                                    <Loader2 className="w-10 h-10 text-white/60 animate-spin mb-4" />
+                                    <p className="text-white/50 font-medium">Loading lyrics...</p>
+                                </div>
+                            ) : lyrics.length > 0 ? (
+                                <div className="py-[50vh] md:py-[20vh] space-y-6 md:space-y-8">
+                                    {lyrics.map((line, index) => {
+                                        const isActive = index === activeLineIndex;
+                                        return (
+                                            <p
+                                                key={index}
+                                                className={`text-2xl md:text-4xl font-bold leading-tight transition-all duration-500 origin-left cursor-pointer ${isActive
+                                                    ? 'text-white scale-105 blur-none opacity-100'
+                                                    : 'text-white/30 scale-100 blur-[1px] opacity-40 hover:opacity-70 hover:blur-none'
+                                                    }`}
+                                                onClick={() => seekTo(line.timestamp)}
+                                            >
+                                                {line.text}
+                                            </p>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center w-full h-full min-h-[300px]">
+                                    <p className="text-white/40 text-lg font-medium">No lyrics available</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
-                    {/* Song Info */}
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="min-w-0 pr-4">
-                            <h2 className="text-2xl font-bold text-white truncate leading-tight tracking-tight drop-shadow-md">
+                    {/* Queue View */}
+                    {isQueueVisible && (
+                        <div className="w-full h-full overflow-y-auto no-scrollbar md:pr-4">
+                            <h3 className="text-xl font-bold text-white mb-6 sticky top-0 bg-[#1c1c1e]/0 backdrop-blur-none z-10">Up Next</h3>
+                            {queue.length > 0 ? (
+                                <div className="space-y-2">
+                                    {queue.map((song, index) => (
+                                        <div key={`${song.id}-${index}`} className="flex items-center gap-4 p-3 rounded-xl hover:bg-white/10 transition group">
+                                            <img src={song.coverUrl} alt={song.title} className="w-12 h-12 rounded-lg object-cover" />
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-white font-medium truncate">{song.title}</h4>
+                                                <p className="text-white/60 text-sm truncate">{song.artist}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-64 text-white/40">
+                                    <ListMusic size={48} className="mb-4 opacity-50" />
+                                    <p>Queue is empty</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Controls Section */}
+            <div className="relative z-30 w-full max-w-screen-xl mx-auto px-6 md:px-12 pb-8 md:pb-12 shrink-0">
+                <div className="flex flex-col gap-6">
+
+                    {/* Song Info & Toggles */}
+                    <div className="flex items-end justify-between">
+                        <div className="min-w-0 pr-8">
+                            <h2 className="text-2xl md:text-3xl font-bold text-white truncate leading-tight mb-1">
                                 {currentSong.title}
                             </h2>
-                            <button className="text-lg text-white/70 truncate hover:text-white transition-colors font-medium">
+                            <button className="text-lg md:text-xl text-white/60 hover:text-white transition-colors font-medium truncate">
                                 {currentSong.artist}
+                            </button>
+                        </div>
+
+                        {/* Desktop Volume/Lyrics/Queue Toggles */}
+                        <div className="hidden md:flex items-center gap-4">
+                            <button
+                                onClick={handleToggleLyrics}
+                                className={`p-3 rounded-full transition-all ${isLyricsVisible ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                            >
+                                <MessageSquareQuote size={20} />
+                            </button>
+                            <button
+                                onClick={handleToggleQueue}
+                                className={`p-3 rounded-full transition-all ${isQueueVisible ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                            >
+                                <ListMusic size={20} />
                             </button>
                         </div>
                     </div>
 
-                    {/* Enhanced Scrubber */}
+                    {/* Scrubber */}
                     <div
-                        className="w-full group py-3 relative"
+                        className="w-full group py-2 relative cursor-pointer"
                         onMouseEnter={() => setIsHoveringScrubber(true)}
                         onMouseLeave={() => setIsHoveringScrubber(false)}
                     >
                         {/* Time Tooltip */}
                         <div
-                            className={`absolute -top-6 transform -translate-x-1/2 bg-white/10 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded transition-opacity duration-200 ${isScrubbing || isHoveringScrubber ? 'opacity-100' : 'opacity-0'}`}
+                            className={`absolute -top-8 transform -translate-x-1/2 bg-white/10 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded transition-opacity duration-200 ${isScrubbing || isHoveringScrubber ? 'opacity-100' : 'opacity-0'}`}
                             style={{ left: `${percent}%` }}
                         >
                             {formatTime(displayTime)}
                         </div>
 
-                        {/* Progress Bar Track */}
-                        <div className="relative h-1 w-full bg-white/20 rounded-full overflow-hidden transition-all duration-300 group-hover:h-2">
+                        <div className="relative h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
                             <div
-                                className="absolute h-full bg-white/90 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                                className="absolute h-full bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]"
                                 style={{ width: `${percent}%` }}
                             ></div>
                         </div>
 
-                        {/* Thumb (Only visible on hover/drag) */}
+                        {/* Thumb */}
                         <div
-                            className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-transform duration-200 ease-out ${isHoveringScrubber || isScrubbing ? 'scale-100' : 'scale-0'}`}
+                            className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg pointer-events-none transition-transform duration-200 ${isHoveringScrubber || isScrubbing ? 'scale-100' : 'scale-0'}`}
                             style={{ left: `calc(${percent}% - 8px)` }}
                         ></div>
 
-                        {/* Input Range (Invisible interaction layer) */}
                         <input
                             type="range"
                             min="0"
@@ -291,79 +348,52 @@ export const FullPlayer: React.FC = () => {
                             onMouseUp={handleScrubEnd}
                             onTouchStart={handleScrubStart}
                             onTouchEnd={handleScrubEnd}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                         />
 
-                        {/* Time Labels */}
-                        <div className="flex justify-between text-[11px] font-medium text-white/40 mt-1 font-sans tracking-wide">
+                        <div className="flex justify-between text-xs font-medium text-white/40 mt-2">
                             <span>{formatTime(displayTime)}</span>
                             <span>-{formatTime(currentDuration - displayTime)}</span>
                         </div>
                     </div>
 
-                    {/* Transport Controls */}
-                    <div className="flex items-center justify-between px-2 sm:px-8 py-1">
-                        <button className="text-white/60 hover:text-white transition active:scale-90" onClick={() => seekTo(Math.max(0, progress - 10))}>
-                            <SkipBack size={32} fill="currentColor" />
-                        </button>
-
+                    {/* Playback Controls */}
+                    <div className="flex items-center justify-between md:justify-center md:gap-12">
                         <button
-                            onClick={togglePlay}
-                            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center transition hover:scale-105 active:scale-95 bg-white/20 backdrop-blur-md shadow-lg border border-white/10"
+                            className="text-white/60 hover:text-white transition active:scale-90 md:hidden"
+                            onClick={handleToggleLyrics}
                         >
-                            {isPlaying ? (
-                                <Pause size={32} fill="white" className="text-white" />
-                            ) : (
-                                <Play size={32} fill="white" className="text-white ml-1.5" />
-                            )}
+                            <MessageSquareQuote size={24} className={isLyricsVisible ? 'text-white' : ''} />
                         </button>
 
-                        <button className="text-white/60 hover:text-white transition active:scale-90" onClick={() => seekTo(Math.min(currentDuration, progress + 10))}>
-                            <SkipForward size={32} fill="currentColor" />
-                        </button>
-                    </div>
-
-                    {/* Volume & Accessories */}
-                    <div className="flex items-center justify-between pt-2">
-                        <button
-                            onClick={toggleLyrics}
-                            className={`p-3 rounded-xl transition duration-300 ${isLyricsVisible
-                                ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110'
-                                : 'text-white/60 hover:text-white hover:bg-white/10'
-                                }`}
-                            disabled={videoMode}
-                            style={{ opacity: videoMode ? 0.3 : 1 }}
-                        >
-                            <MessageSquareQuote size={22} strokeWidth={isLyricsVisible ? 2.5 : 2} />
-                        </button>
-
-                        {/* Animated Volume Pill */}
-                        <div className="group flex items-center bg-white/10 hover:bg-white/20 rounded-full p-1.5 pr-2 backdrop-blur-md transition-all duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] w-10 hover:w-36 overflow-hidden">
-                            <button
-                                onClick={toggleMute}
-                                className="p-1.5 rounded-full text-white/80 group-hover:text-white transition shrink-0 z-10"
-                            >
-                                <VolumeIcon size={20} />
+                        <div className="flex items-center gap-6 md:gap-10">
+                            <button className="text-white/60 hover:text-white transition active:scale-90" onClick={playPrevious}>
+                                <SkipBack size={32} md:size={40} fill="currentColor" />
                             </button>
 
-                            {/* Hidden Slider Container */}
-                            <div className="w-0 group-hover:w-full transition-all duration-500 flex items-center pl-2 opacity-0 group-hover:opacity-100">
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={volume}
-                                    onChange={(e) => setVolume(Number(e.target.value))}
-                                    className="w-20 h-1 bg-white/30 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full"
-                                />
-                            </div>
+                            <button
+                                onClick={togglePlay}
+                                className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-xl"
+                            >
+                                {isPlaying ? (
+                                    <Pause size={32} md:size={40} fill="black" />
+                                ) : (
+                                    <Play size={32} md:size={40} fill="black" className="ml-1" />
+                                )}
+                            </button>
+
+                            <button className="text-white/60 hover:text-white transition active:scale-90" onClick={playNext}>
+                                <SkipForward size={32} md:size={40} fill="currentColor" />
+                            </button>
                         </div>
 
-                        <button className="p-3 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition">
-                            <ListMusic size={22} />
+                        <button
+                            className="text-white/60 hover:text-white transition active:scale-90 md:hidden"
+                            onClick={handleToggleQueue}
+                        >
+                            <ListMusic size={24} className={isQueueVisible ? 'text-white' : ''} />
                         </button>
                     </div>
-
                 </div>
             </div>
         </div>

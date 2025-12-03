@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Plus, MessageSquareQuote, MoreHorizontal } from 'lucide-react';
+import { Play, Plus, MessageSquareQuote, MoreHorizontal, ListPlus } from 'lucide-react';
 import { Song } from '../types';
 
 interface SongCardProps {
@@ -8,12 +8,16 @@ interface SongCardProps {
     onPlay: (e: React.MouseEvent) => void;
     onAddToPlaylist?: (e: React.MouseEvent) => void;
     onViewLyrics?: (e: React.MouseEvent) => void;
+    onAddToQueue?: (e: React.MouseEvent) => void;
+    variant?: 'fixed' | 'responsive';
 }
 
-export const SongCard: React.FC<SongCardProps> = ({ song, onClick, onPlay, onAddToPlaylist, onViewLyrics }) => {
+export const SongCard: React.FC<SongCardProps> = ({ song, onClick, onPlay, onAddToPlaylist, onViewLyrics, onAddToQueue, variant = 'fixed' }) => {
+    const widthClass = variant === 'fixed' ? 'flex-none w-44 sm:w-48 snap-start' : 'w-full';
+
     return (
         <div
-            className="group relative flex-none w-44 sm:w-48 snap-start cursor-pointer transition-transform duration-300 hover:scale-[1.02]"
+            className={`group relative ${widthClass} cursor-pointer transition-transform duration-300 hover:scale-[1.02]`}
             onClick={onClick}
         >
             {/* Image Container */}
@@ -35,6 +39,15 @@ export const SongCard: React.FC<SongCardProps> = ({ song, onClick, onPlay, onAdd
                     </button>
 
                     <div className="flex gap-2">
+                        {onAddToQueue && (
+                            <button
+                                onClick={onAddToQueue}
+                                className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center hover:bg-black/60 transition-all"
+                                title="Add to Queue"
+                            >
+                                <ListPlus size={16} className="text-white" />
+                            </button>
+                        )}
                         {onViewLyrics && (
                             <button
                                 onClick={onViewLyrics}

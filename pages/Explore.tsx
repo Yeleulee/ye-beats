@@ -1,30 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { Music, TrendingUp, Radio, Disc3, Sparkles, Heart, Calendar, Zap } from 'lucide-react';
+import { TrendingUp, Mic2, Guitar, Headphones, Wind, Coffee, Speaker, Music } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { searchYouTube, getTrendingVideos } from '../services/youtubeService';
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
 
 const GENRES = [
-    { id: 'pop', name: 'Pop', query: 'pop music 2024', icon: Music, gradient: 'from-pink-500 to-rose-500' },
-    { id: 'rock', name: 'Rock', query: 'rock music hits', icon: Disc3, gradient: 'from-purple-500 to-indigo-500' },
-    { id: 'hiphop', name: 'Hip-Hop', query: 'hip hop rap music', icon: Zap, gradient: 'from-orange-500 to-red-500' },
-    { id: 'electronic', name: 'Electronic', query: 'electronic dance music', icon: Radio, gradient: 'from-cyan-500 to-blue-500' },
-    { id: 'jazz', name: 'Jazz', query: 'jazz music instrumental', icon: Sparkles, gradient: 'from-amber-500 to-yellow-500' },
-    { id: 'chill', name: 'Chill', query: 'chill lofi beats', icon: Heart, gradient: 'from-teal-500 to-emerald-500' },
+    { id: 'pop', name: 'Pop', query: 'pop music 2024', icon: Mic2, gradient: 'from-[#FF2E54] to-[#FF0055]' },
+    { id: 'rock', name: 'Rock', query: 'rock music hits', icon: Guitar, gradient: 'from-[#A100F2] to-[#6200EA]' },
+    { id: 'hiphop', name: 'Hip-Hop', query: 'hip hop rap music', icon: Speaker, gradient: 'from-[#FF9500] to-[#FF5E3A]' },
+    { id: 'electronic', name: 'Electronic', query: 'electronic dance music', icon: Headphones, gradient: 'from-[#00F2EA] to-[#0066FF]' },
+    { id: 'jazz', name: 'Jazz', query: 'jazz music instrumental', icon: Wind, gradient: 'from-[#FFD60A] to-[#FF9F0A]' },
+    { id: 'chill', name: 'Chill', query: 'chill lofi beats', icon: Coffee, gradient: 'from-[#30D158] to-[#00C853]' },
 ];
 
 const MOODS = [
-    { name: 'Workout', emoji: '💪', query: 'workout motivation music' },
-    { name: 'Focus', emoji: '🎯', query: 'focus study music' },
+    { name: 'Workout', emoji: '🔥', query: 'workout motivation music' },
+    { name: 'Focus', emoji: '🧠', query: 'focus study music' },
     { name: 'Party', emoji: '🎉', query: 'party music hits' },
-    { name: 'Relax', emoji: '😌', query: 'relaxing calm music' },
-    { name: 'Sleep', emoji: '😴', query: 'sleep music peaceful' },
-    { name: 'Morning', emoji: '☀️', query: 'morning wake up music' },
+    { name: 'Relax', emoji: '🍃', query: 'relaxing calm music' },
+    { name: 'Sleep', emoji: '🌙', query: 'sleep music peaceful' },
+    { name: 'Morning', emoji: '🌅', query: 'morning wake up music' },
 ];
 
 export const Explore: React.FC = () => {
-    const { playSong, setLyricsVisible } = usePlayer();
+    const { playSong, setLyricsVisible, addToQueue } = usePlayer();
     const [selectedGenre, setSelectedGenre] = useState<string>('pop');
     const [genreSongs, setGenreSongs] = useState<Record<string, Song[]>>({});
     const [trendingSongs, setTrendingSongs] = useState<Song[]>([]);
@@ -86,7 +86,7 @@ export const Explore: React.FC = () => {
         <div className="pb-32 bg-[#121212] min-h-screen">
             {/* Header */}
             <div className="sticky top-0 z-30 bg-gradient-to-b from-[#121212] to-transparent pt-6 pb-4 px-6">
-                <h1 className="text-4xl font-bold text-white tracking-tight mb-2">
+                <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-2">
                     Explore
                 </h1>
                 <p className="text-neutral-400 text-sm">
@@ -114,6 +114,10 @@ export const Explore: React.FC = () => {
                                 e.stopPropagation();
                                 playSong(song);
                                 setLyricsVisible(true);
+                            }}
+                            onAddToQueue={(e) => {
+                                e.stopPropagation();
+                                addToQueue(song);
                             }}
                         />
                     ))}
@@ -151,8 +155,8 @@ export const Explore: React.FC = () => {
                                 key={genre.id}
                                 onClick={() => setSelectedGenre(genre.id)}
                                 className={`flex-none px-5 py-3 rounded-full transition-all ${isActive
-                                        ? `bg-gradient-to-r ${genre.gradient} text-white shadow-lg scale-105`
-                                        : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white'
+                                    ? `bg-gradient-to-r ${genre.gradient} text-white shadow-lg scale-105`
+                                    : 'bg-white/5 text-neutral-400 hover:bg-white/10 hover:text-white'
                                     }`}
                             >
                                 <div className="flex items-center gap-2">
@@ -193,6 +197,7 @@ export const Explore: React.FC = () => {
                             <SongCard
                                 key={song.id}
                                 song={song}
+                                variant="responsive"
                                 onClick={() => playSong(song)}
                                 onPlay={(e) => {
                                     e.stopPropagation();
@@ -202,6 +207,10 @@ export const Explore: React.FC = () => {
                                     e.stopPropagation();
                                     playSong(song);
                                     setLyricsVisible(true);
+                                }}
+                                onAddToQueue={(e) => {
+                                    e.stopPropagation();
+                                    addToQueue(song);
                                 }}
                             />
                         ))}

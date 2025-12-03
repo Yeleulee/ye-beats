@@ -324,18 +324,10 @@ export const YouTubePlayer: React.FC = () => {
         }
     }, [volume]);
 
-    // Determine styles based on mode
-    // Note: We use top/left positioning to move it offscreen or onscreen without using display:none
-    // This ensures the browser doesn't throttle the background audio process.
-    const isVideoVisible = videoMode && !isMinimized;
-
     return (
         <div
             ref={containerRef}
-            className={`fixed transition-all duration-500 ease-in-out overflow-hidden bg-black ${isVideoVisible
-                ? "z-[70] opacity-100 top-[18vh] left-0 right-0 mx-auto w-[90%] max-w-lg aspect-video shadow-2xl rounded-xl"
-                : "z-[-1] opacity-0 top-0 left-0 w-1 h-1 pointer-events-none"
-                }`}
+            className="w-full h-full bg-black rounded-2xl overflow-hidden"
         >
             <div id="youtube-player-mount" className="w-full h-full"></div>
         </div>

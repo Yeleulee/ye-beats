@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const Home: React.FC<Props> = ({ onSearchPress }) => {
-    const { playSong, setLyricsVisible } = usePlayer();
+    const { playSong, setLyricsVisible, addToQueue } = usePlayer();
     const [recommended, setRecommended] = useState<Song[]>([]);
     const [trending, setTrending] = useState<Song[]>([]);
     const [loading, setLoading] = useState(true);
@@ -88,6 +88,10 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                             playSong(song);
                             setLyricsVisible(true);
                         }}
+                        onAddToQueue={(e) => {
+                            e.stopPropagation();
+                            addToQueue(song);
+                        }}
                     />
                 ))}
             </div>
@@ -97,7 +101,7 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
     return (
         <div className="pb-32 bg-[#121212] min-h-screen overflow-hidden">
             {/* Top Bar with Profile & Search */}
-            <div className="sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
+            <div className="md:hidden sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg text-white cursor-pointer hover:scale-110 transition-transform duration-300 relative overflow-hidden">
                     <span className="relative z-10">V</span>
                     <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
@@ -111,13 +115,13 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                 </button>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-6 md:pt-10">
                 {/* Header Date */}
                 <div className="px-6 mb-6">
                     <div className="text-red-500 text-xs font-bold uppercase tracking-widest mb-2 animate-in fade-in duration-500">
                         {dateString}
                     </div>
-                    <h1 className="text-5xl font-black text-white tracking-tight animate-in slide-in-from-bottom-4 duration-700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight animate-in slide-in-from-bottom-4 duration-700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
                         Listen Now
                     </h1>
                 </div>
