@@ -8,16 +8,16 @@ export const THEME = {
   navBar: 'rgba(18, 18, 18, 0.95)',
 };
 
-export const YOUTUBE_API_KEY = 'AIzaSyDG7ZgeboRkseyPsL65kf6peqE4_hhWeYE';
+export const YOUTUBE_API_KEY = 'AIzaSyAYOFHxyKNy_49L0AH53ORx3ArRbsmpSSI';
 
 // Fallback IDs if API quota is reached
 // Using NoCopyrightSounds (NCS) which are globally embeddable
 export const YOUTUBE_IDS = [
-    'K4DyBUG242c', // Cartoon - On & On
-    'bM7SZ5SBzyY', // Alan Walker - Fade
-    '3nQNiWdeH2Q', // Frakture - Hindsight
-    'J2X5mJ3HDYE', // Janji - Heroes Tonight
-    'p7ZsBPK656s', // K-391 - Summertime
+  'K4DyBUG242c', // Cartoon - On & On
+  'bM7SZ5SBzyY', // Alan Walker - Fade
+  '3nQNiWdeH2Q', // Frakture - Hindsight
+  'J2X5mJ3HDYE', // Janji - Heroes Tonight
+  'p7ZsBPK656s', // K-391 - Summertime
 ];
 
 export const MOCK_SONGS = [

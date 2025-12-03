@@ -33,4 +33,5 @@ export interface PlayerState {
   duration: number; // Total duration in seconds
   seekRequest: number | null; // Timestamp to seek to, or null
   videoMode: boolean; // Toggle between audio-only (art) and video
+  isLyricsVisible: boolean;
 }

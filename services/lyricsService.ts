@@ -70,7 +70,7 @@ const generateFallbackLyrics = (duration: number): LyricLine[] => {
     "Feel the rhythm",
     "Lost in the sound",
   ];
-  
+
   const interval = duration / fallbackLines.length;
   return fallbackLines.map((text, index) => ({
     text,

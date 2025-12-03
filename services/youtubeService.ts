@@ -44,84 +44,186 @@ const mapYouTubeItemToSong = (item: any): Song => {
 };
 
 export const searchYouTube = async (query: string): Promise<Song[]> => {
+    const apiKey = YOUTUBE_API_KEY?.trim();
+    if (!apiKey || apiKey.length < 10) {
+        console.error('❌ YouTube API key is not configured properly');
+        return MOCK_SONGS;
+    }
+
     try {
-        // STRATEGY 1: Search for "lyrics" or "audio" versions - these are MUCH more likely to be embeddable
-        // Official music videos often have embedding restrictions
+        console.log(`🔍 Searching YouTube for: "${query}"`);
+
+        // STRATEGY: Use more aggressive filtering and prioritize music content
         const searchTerms = [
-            `${query} lyrics`,
-            `${query} audio`,
-            `${query} lyric video`
+            `${query} official audio`,
+            `${query} music`,
+            query,
         ];
 
         let allResults: Song[] = [];
+        const processedVideoIds = new Set<string>();
 
         // Try each search term until we get enough results
         for (const searchTerm of searchTerms) {
-            if (allResults.length >= 10) break;
+            if (allResults.length >= 15) break;
 
-            const searchUrl = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&videoCategoryId=10&maxResults=15&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`;
+            // Add videoCategoryId=10 (Music) and safeSearch=none for better results
+            const searchUrl = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&videoCategoryId=10&maxResults=25&safeSearch=none&videoSyndicated=true&key=${apiKey}`;
+
+            console.log(`📡 Fetching search results for: "${searchTerm}"`);
             const searchRes = await fetch(searchUrl);
 
-            if (!searchRes.ok) continue;
+            if (!searchRes.ok) {
+                const errorData = await searchRes.json().catch(() => ({}));
+                console.error(`❌ Search API error (${searchRes.status}):`, errorData);
+
+                // If quota exceeded, stop trying and return what we have or mock data
+                if (searchRes.status === 403 || searchRes.status === 429) {
+                    console.warn('⚠️ YouTube API quota exceeded, using fallback data');
+                    return allResults.length > 0 ? allResults : MOCK_SONGS;
+                }
+                continue;
+            }
 
             const searchData = await searchRes.json();
-            if (!searchData.items || searchData.items.length === 0) continue;
 
-            const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
+            if (!searchData.items || searchData.items.length === 0) {
+                console.log(`ℹ️ No results for "${searchTerm}"`);
+                continue;
+            }
 
-            // 2. Fetch details and verify embeddable status
-            const detailsUrl = `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${YOUTUBE_API_KEY}`;
+            const videoIds = searchData.items
+                .map((item: any) => item.id.videoId)
+                .filter((id: string) => !processedVideoIds.has(id))
+                .join(',');
+
+            if (!videoIds) continue;
+
+            // 2. Fetch details with STRICT embeddable filtering
+            const detailsUrl = `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${apiKey}`;
+            console.log(`📹 Fetching video details for ${videoIds.split(',').length} videos`);
+
             const detailsRes = await fetch(detailsUrl);
+
+            if (!detailsRes.ok) {
+                const errorData = await detailsRes.json().catch(() => ({}));
+                console.error(`❌ Details API error (${detailsRes.status}):`, errorData);
+                continue;
+            }
+
             const detailsData = await detailsRes.json();
 
-            // Filter for embeddable videos and exclude age-restricted content
+            // STRICT FILTERING: Only keep videos that are:
+            // 1. Embeddable
+            // 2. Public (not unlisted or private)
+            // 3. Not region restricted
+            // 4. Not made for kids (often have playback restrictions)
             const validItems = detailsData.items.filter((item: any) => {
-                const isEmbeddable = item.status?.embeddable === true;
-                const isPublic = item.status?.privacyStatus === 'public';
-                const notRestricted = !item.contentDetails?.contentRating?.ytRating;
+                const status = item.status;
+                const snippet = item.snippet;
 
-                return isEmbeddable && isPublic && notRestricted;
+                const isEmbeddable = status?.embeddable === true;
+                const isPublic = status?.privacyStatus === 'public';
+                const notMadeForKids = !status?.madeForKids;
+                const uploadStatus = status?.uploadStatus === 'processed';
+
+                // Prefer videos from official channels (they're more likely to be embeddable)
+                const isLikelyOfficial = snippet?.channelTitle?.toLowerCase().includes('official') ||
+                    snippet?.channelTitle?.toLowerCase().includes('vevo') ||
+                    snippet?.title?.toLowerCase().includes('official');
+
+                // Check if not region restricted (if regionRestriction exists, it might be limited)
+                const notRegionRestricted = !item.contentDetails?.regionRestriction?.blocked;
+
+                const isValid = isEmbeddable &&
+                    isPublic &&
+                    notMadeForKids &&
+                    uploadStatus &&
+                    notRegionRestricted;
+
+                if (!isValid) {
+                    console.log(`⏭️ Skipping: ${snippet?.title} (embeddable: ${isEmbeddable}, public: ${isPublic}, kids: ${!notMadeForKids}, region: ${!notRegionRestricted})`);
+                }
+
+                return isValid;
             });
 
-            allResults = [...allResults, ...validItems.map(mapYouTubeItemToSong)];
+            console.log(`✅ Found ${validItems.length} fully playable videos out of ${detailsData.items.length}`);
+
+            validItems.forEach((item: any) => {
+                if (!processedVideoIds.has(item.id)) {
+                    processedVideoIds.add(item.id);
+                    allResults.push(mapYouTubeItemToSong(item));
+                }
+            });
         }
 
-        // Remove duplicates based on title similarity
-        const uniqueResults = allResults.filter((song, index, self) =>
-            index === self.findIndex((s) => s.title.toLowerCase() === song.title.toLowerCase())
-        ).slice(0, 10);
-
-        return uniqueResults.length > 0 ? uniqueResults : MOCK_SONGS;
+        console.log(`🎵 Total results found: ${allResults.length}`);
+        return allResults.length > 0 ? allResults.slice(0, 20) : MOCK_SONGS;
 
     } catch (error) {
-        console.error("YouTube API Error:", error);
+        console.error("💥 YouTube API Error:", error);
         return MOCK_SONGS; // Fallback to mock data if quota exceeded or error
     }
 };
 
 export const getTrendingVideos = async (): Promise<Song[]> => {
+    const apiKey = YOUTUBE_API_KEY?.trim();
+    if (!apiKey || apiKey.length < 10) {
+        console.error('❌ YouTube API key is not configured properly');
+        return MOCK_SONGS;
+    }
+
     try {
-        // Fetch more results to have a better pool after filtering
-        const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=30&regionCode=US&key=${YOUTUBE_API_KEY}`;
+        console.log('🔥 Fetching trending music videos...');
+
+        // Fetch MORE results to have a better pool after strict filtering
+        const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${apiKey}`;
         const res = await fetch(url);
-        if (!res.ok) throw new Error("YouTube Trending Failed");
+
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            console.error(`❌ Trending API error (${res.status}):`, errorData);
+
+            if (res.status === 403 || res.status === 429) {
+                console.warn('⚠️ YouTube API quota exceeded for trending videos');
+            }
+            return MOCK_SONGS;
+        }
 
         const data = await res.json();
 
-        // Aggressively filter for embeddable, public, non-restricted videos
+        // STRICT FILTERING - Same as search
         const embeddableItems = data.items.filter((item: any) => {
-            const isEmbeddable = item.status?.embeddable === true;
-            const isPublic = item.status?.privacyStatus === 'public';
-            const notRestricted = !item.contentDetails?.contentRating?.ytRating;
-            const notLivestream = item.snippet?.liveBroadcastContent === 'none';
+            const status = item.status;
+            const snippet = item.snippet;
 
-            return isEmbeddable && isPublic && notRestricted && notLivestream;
+            const isEmbeddable = status?.embeddable === true;
+            const isPublic = status?.privacyStatus === 'public';
+            const notMadeForKids = !status?.madeForKids;
+            const uploadStatus = status?.uploadStatus === 'processed';
+            const notRegionRestricted = !item.contentDetails?.regionRestriction?.blocked;
+
+            const isValid = isEmbeddable &&
+                isPublic &&
+                notMadeForKids &&
+                uploadStatus &&
+                notRegionRestricted;
+
+            if (!isValid) {
+                console.log(`⏭️ Skipping trending: ${snippet?.title} (embeddable: ${isEmbeddable}, public: ${isPublic})`);
+            }
+
+            return isValid;
         });
 
-        // Return top 10 valid videos
-        return embeddableItems.slice(0, 10).map(mapYouTubeItemToSong);
+        console.log(`✅ Found ${embeddableItems.length} fully playable trending videos out of ${data.items.length}`);
+
+        // Return top 20 valid videos
+        const results = embeddableItems.slice(0, 20).map(mapYouTubeItemToSong);
+        return results.length > 0 ? results : MOCK_SONGS;
     } catch (error) {
-        console.error("YouTube Trending Error:", error);
+        console.error("💥 YouTube Trending Error:", error);
         return MOCK_SONGS;
     }
 };

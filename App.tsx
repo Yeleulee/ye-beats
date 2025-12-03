@@ -8,6 +8,7 @@ import { YouTubePlayer } from './components/YouTubePlayer';
 import { Home } from './pages/Home';
 import { Search } from './pages/Search';
 import { Library } from './pages/Library';
+import { Explore } from './pages/Explore';
 import { Tab } from './types';
 
 const AppContent = () => {
@@ -17,7 +18,7 @@ const AppContent = () => {
   // Custom navigation handler to support "Back" from Search
   const handleTabChange = (tab: Tab) => {
     if (tab === Tab.SEARCH) {
-        setPreviousTab(activeTab);
+      setPreviousTab(activeTab);
     }
     setActiveTab(tab);
   };
@@ -31,14 +32,7 @@ const AppContent = () => {
       case Tab.HOME:
         return <Home onSearchPress={() => handleTabChange(Tab.SEARCH)} />;
       case Tab.EXPLORE:
-        return (
-            <div className="flex items-center justify-center h-screen text-gray-500">
-                <div className="text-center">
-                    <h2 className="text-white text-xl font-bold mb-2">Explore</h2>
-                    <p>Coming soon...</p>
-                </div>
-            </div>
-        );
+        return <Explore />;
       case Tab.LIBRARY:
         return <Library />;
       case Tab.SEARCH:
@@ -60,7 +54,7 @@ const AppContent = () => {
 
       {/* Overlays */}
       <FullPlayer />
-      
+
       {/* Bottom Interface */}
       {activeTab !== Tab.SEARCH && (
         <>

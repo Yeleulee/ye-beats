@@ -15,6 +15,8 @@ interface PlayerContextType extends PlayerState {
   volume: number;
   setVolume: (val: number) => void;
   toggleVideoMode: () => void;
+  toggleLyrics: () => void;
+  setLyricsVisible: (visible: boolean) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -29,6 +31,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     duration: 0,
     seekRequest: null,
     videoMode: false,
+    isLyricsVisible: false,
   });
 
   const [volume, setVolume] = useState(100);
@@ -62,7 +65,7 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   const setProgress = (val: number) => {
-      setState(prev => ({ ...prev, progress: val }));
+    setState(prev => ({ ...prev, progress: val }));
   };
 
   const setDuration = (val: number) => {
@@ -81,21 +84,31 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setState(prev => ({ ...prev, videoMode: !prev.videoMode }));
   };
 
+  const toggleLyrics = () => {
+    setState(prev => ({ ...prev, isLyricsVisible: !prev.isLyricsVisible }));
+  };
+
+  const setLyricsVisible = (visible: boolean) => {
+    setState(prev => ({ ...prev, isLyricsVisible: visible }));
+  };
+
   return (
-    <PlayerContext.Provider value={{ 
-        ...state, 
-        playSong, 
-        togglePlay, 
-        setPlaying,
-        minimizePlayer, 
-        maximizePlayer, 
-        setProgress, 
-        setDuration,
-        seekTo,
-        clearSeekRequest,
-        volume,
-        setVolume,
-        toggleVideoMode
+    <PlayerContext.Provider value={{
+      ...state,
+      playSong,
+      togglePlay,
+      setPlaying,
+      minimizePlayer,
+      maximizePlayer,
+      setProgress,
+      setDuration,
+      seekTo,
+      clearSeekRequest,
+      volume,
+      setVolume,
+      toggleVideoMode,
+      toggleLyrics,
+      setLyricsVisible
     }}>
       {children}
     </PlayerContext.Provider>

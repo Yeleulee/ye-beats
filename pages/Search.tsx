@@ -18,7 +18,7 @@ export const Search: React.FC<Props> = ({ onBack }) => {
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!query.trim()) return;
-    
+
     setIsSearching(true);
     const songs = await searchYouTube(query);
     setResults(songs);
@@ -27,48 +27,48 @@ export const Search: React.FC<Props> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-[#121212] pt-4 pb-32">
-        {/* Search Header */}
+      {/* Search Header */}
       <div className="flex items-center gap-2 px-2 sticky top-0 bg-[#121212] z-30 pb-2 border-b border-white/5">
         <button onClick={onBack} className="p-2">
           <ArrowLeft className="text-white" />
         </button>
         <form onSubmit={handleSearch} className="flex-1 relative">
-            <input
+          <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search songs, artists, vibes..."
             className="w-full bg-[#212121] text-white px-4 py-2 pl-4 pr-10 rounded-full focus:bg-[#303030] transition placeholder-gray-500"
             autoFocus
-            />
-            {query.length > 0 && (
-                <button 
-                    type="button" 
-                    onClick={() => setQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                    <X size={16} className="text-gray-400" />
-                </button>
-            )}
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2"
+            >
+              <X size={16} className="text-gray-400" />
+            </button>
+          )}
         </form>
         <button className="p-2 bg-[#212121] rounded-full">
-            <Mic size={20} className="text-white" />
+          <Mic size={20} className="text-white" />
         </button>
       </div>
 
       {/* Content */}
       <div className="px-4 mt-4">
         {isSearching ? (
-           <div className="flex flex-col items-center justify-center mt-20 space-y-4">
-                <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-gray-400 text-sm">Searching YouTube...</p>
-            </div>
+          <div className="flex flex-col items-center justify-center mt-20 space-y-4">
+            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-400 text-sm">Searching YouTube...</p>
+          </div>
         ) : results.length > 0 ? (
           <div className="space-y-4">
             <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wide">Top Results</h3>
             {results.map((song) => (
-              <div 
-                key={song.id} 
+              <div
+                key={song.id}
                 className="flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition cursor-pointer"
                 onClick={() => playSong(song)}
               >
@@ -85,24 +85,24 @@ export const Search: React.FC<Props> = ({ onBack }) => {
           <div className="mt-8">
             <h3 className="text-white font-bold mb-4">Trending Searches</h3>
             <div className="flex flex-wrap gap-3">
-                {['Lo-fi beats', 'Top hits 2024', 'Workout mix', 'The Weeknd', 'Rock classics'].map(term => (
-                    <button 
-                        key={term}
-                        onClick={() => {
-                            setQuery(term);
-                            // Trigger search manually
-                            setIsSearching(true);
-                            searchYouTube(term).then(res => {
-                                setResults(res);
-                                setIsSearching(false);
-                            });
-                        }}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#212121] rounded-full text-sm font-medium text-gray-300 hover:text-white transition"
-                    >
-                        <SearchIcon size={14} />
-                        {term}
-                    </button>
-                ))}
+              {['Lo-fi beats', 'Top hits 2024', 'Workout mix', 'The Weeknd', 'Rock classics'].map(term => (
+                <button
+                  key={term}
+                  onClick={() => {
+                    setQuery(term);
+                    // Trigger search manually
+                    setIsSearching(true);
+                    searchYouTube(term).then(res => {
+                      setResults(res);
+                      setIsSearching(false);
+                    });
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#212121] rounded-full text-sm font-medium text-gray-300 hover:text-white transition"
+                >
+                  <SearchIcon size={14} />
+                  {term}
+                </button>
+              ))}
             </div>
           </div>
         )}

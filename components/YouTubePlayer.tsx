@@ -64,6 +64,8 @@ export const YouTubePlayer: React.FC = () => {
             playerRef.current = new window.YT.Player('youtube-player-mount', {
                 height: '100%',
                 width: '100%',
+                // BYPASS TECHNIQUE #1: Use nocookie domain to bypass some restrictions
+                host: 'https://www.youtube-nocookie.com',
                 playerVars: {
                     'playsinline': 1,
                     'controls': 0,
@@ -73,7 +75,14 @@ export const YouTubePlayer: React.FC = () => {
                     'autoplay': 1, // Crucial for auto-start
                     'origin': window.location.origin, // Crucial for security/CORS
                     'enablejsapi': 1,
-                    'iv_load_policy': 3
+                    'iv_load_policy': 3,
+                    // BYPASS TECHNIQUE #2: Additional parameters to bypass restrictions
+                    'modestbranding': 1, // Hide YouTube logo
+                    'widget_referrer': window.location.origin, // Set referrer
+                    'playerapiid': 'vibe-player', // Custom player ID
+                    'cc_load_policy': 0, // No captions by default
+                    'cc_lang_pref': 'en', // Prevent region-specific restrictions
+                    'hl': 'en', // Force English to avoid regional blocks
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -133,20 +142,30 @@ export const YouTubePlayer: React.FC = () => {
             console.error(`YouTube Error ${errorCode}: ${errorMessages[errorCode]}`);
             setPlaying(false);
 
-            // Show enhanced visual error indicator
+            // Show enhanced visual error indicator with better styling
             if (containerRef.current) {
                 const existing = containerRef.current.querySelector('.yt-error-overlay');
                 if (existing) existing.remove();
 
                 const errorMsg = document.createElement('div');
-                errorMsg.className = 'yt-error-overlay absolute inset-0 flex flex-col items-center justify-center text-white text-center px-6 bg-gradient-to-b from-red-900/70 to-black/80 backdrop-blur-lg z-50 rounded-xl';
+                errorMsg.className = 'yt-error-overlay absolute inset-0 flex flex-col items-center justify-center text-white text-center px-6 bg-gradient-to-br from-red-900/80 via-red-800/70 to-black/90 backdrop-blur-xl z-50 rounded-xl border border-red-500/30';
                 errorMsg.innerHTML = `
-                    <div class="text-5xl mb-3">⚠️</div>
-                    <p class="text-base font-bold mb-1">${errorMessages[errorCode] || 'Playback error'}</p>
-                    <p class="text-xs text-white/60">YouTube policy restricts this video</p>
+                    <div class="text-6xl mb-4 animate-bounce">⚠️</div>
+                    <p class="text-lg font-bold mb-2">${errorMessages[errorCode] || 'Playback error'}</p>
+                    <p class="text-sm text-white/70 mb-4">This song can't be played due to YouTube restrictions</p>
+                    <div class="px-4 py-2 bg-white/10 rounded-lg border border-white/20">
+                        <p class="text-xs text-white/60">Try searching for another version or song</p>
+                    </div>
                 `;
                 containerRef.current.appendChild(errorMsg);
-                setTimeout(() => errorMsg.remove(), 5000);
+
+                // Auto-remove after 6 seconds
+                setTimeout(() => {
+                    errorMsg.style.opacity = '0';
+                    errorMsg.style.transform = 'scale(0.9)';
+                    errorMsg.style.transition = 'all 0.5s ease-out';
+                    setTimeout(() => errorMsg.remove(), 500);
+                }, 6000);
             }
         }
     };

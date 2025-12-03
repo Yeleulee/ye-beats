@@ -4,25 +4,6 @@ import { ChevronDown, Play, Pause, SkipBack, SkipForward, MoreHorizontal, Messag
 import { usePlayer } from '../context/PlayerContext';
 import { fetchLyrics, LyricLine } from '../services/lyricsService';
 
-const MOCK_LYRICS = [
-    "Caught in a vibe, yeah we rolling",
-    "Lights flashing bright, never folding",
-    "Music in the air, feel the motion",
-    "Lost in the sound, deep like ocean",
-    "Every beat drops, heart is racing",
-    "Chasing the dream, time we wasting",
-    "Night is still young, we go higher",
-    "Set the roof on fire, burning desire",
-    "Can't stop the feeling, it's electric",
-    "Moves so smooth, it's automatic",
-    "World spinning round, we stay steady",
-    "For the next track, yeah we ready",
-    "Echoes in the dark, calling out",
-    "No room for fear, no room for doubt",
-    "Rhythm inside, it’s taking over",
-    "Lucky just like a four-leaf clover"
-];
-
 // Helper for formatting seconds
 const formatTime = (seconds: number) => {
     if (!seconds || isNaN(seconds)) return "0:00";
@@ -44,9 +25,12 @@ export const FullPlayer: React.FC = () => {
         volume,
         setVolume,
         videoMode,
-        toggleVideoMode
+        toggleVideoMode,
+        isLyricsVisible,
+        toggleLyrics,
+        setLyricsVisible
     } = usePlayer();
-    const [showLyrics, setShowLyrics] = useState(false);
+
     const [lyrics, setLyrics] = useState<LyricLine[]>([]);
     const [isLoadingLyrics, setIsLoadingLyrics] = useState(false);
 
@@ -60,7 +44,7 @@ export const FullPlayer: React.FC = () => {
     // Reset lyrics when song changes
     useEffect(() => {
         setLyrics([]);
-        setShowLyrics(false);
+        setLyricsVisible(false);
     }, [currentSong?.id]);
 
     // Manual fetch function
@@ -72,6 +56,13 @@ export const FullPlayer: React.FC = () => {
                 .finally(() => setIsLoadingLyrics(false));
         }
     };
+
+    // Auto-fetch lyrics when toggled on
+    useEffect(() => {
+        if (isLyricsVisible && lyrics.length === 0) {
+            fetchLyricsManually();
+        }
+    }, [isLyricsVisible]);
 
     // Sync local scrubber state with global progress when not dragging
     useEffect(() => {
@@ -88,13 +79,13 @@ export const FullPlayer: React.FC = () => {
 
     // Auto-scroll lyrics
     useEffect(() => {
-        if (showLyrics && lyricsContainerRef.current && activeLineIndex >= 0) {
+        if (isLyricsVisible && lyricsContainerRef.current && activeLineIndex >= 0) {
             const activeEl = lyricsContainerRef.current.children[activeLineIndex] as HTMLElement;
             if (activeEl) {
                 activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-    }, [activeLineIndex, showLyrics]);
+    }, [activeLineIndex, isLyricsVisible]);
 
     if (!currentSong) return null;
 
@@ -187,7 +178,7 @@ export const FullPlayer: React.FC = () => {
 
                     {/* Album Art View */}
                     <div
-                        className={`relative w-full max-w-[340px] aspect-square transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) flex items-center justify-center ${showLyrics || videoMode
+                        className={`relative w-full max-w-[340px] aspect-square transition-all duration-700 cubic-bezier(0.34, 1.56, 0.64, 1) flex items-center justify-center ${isLyricsVisible || videoMode
                             ? 'opacity-0 scale-75 blur-md absolute pointer-events-none translate-y-10'
                             : 'opacity-100 scale-100 translate-y-0'
                             }`}
@@ -202,7 +193,7 @@ export const FullPlayer: React.FC = () => {
 
                     {/* Placeholder for Video Mode (Matches YouTubePlayer position logic roughly) */}
                     <div
-                        className={`absolute inset-0 flex items-center justify-center transition-all duration-500 pointer-events-none ${videoMode && !showLyrics ? 'opacity-100' : 'opacity-0'}`}
+                        className={`absolute inset-0 flex items-center justify-center transition-all duration-500 pointer-events-none ${videoMode && !isLyricsVisible ? 'opacity-100' : 'opacity-0'}`}
                     >
                         {/* The YouTubePlayer component in App.tsx is fixed positioned over this area */}
                     </div>
@@ -210,7 +201,7 @@ export const FullPlayer: React.FC = () => {
                     {/* Lyrics View */}
                     <div
                         ref={lyricsContainerRef}
-                        className={`absolute inset-0 overflow-y-auto no-scrollbar transition-all duration-700 flex flex-col items-start pt-[50%] pb-[50%] px-2 space-y-9 ${showLyrics ? 'opacity-100 z-20 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95 translate-y-8'
+                        className={`absolute inset-0 overflow-y-auto no-scrollbar transition-all duration-700 flex flex-col items-start pt-[50%] pb-[50%] px-2 space-y-9 ${isLyricsVisible ? 'opacity-100 z-20 pointer-events-auto scale-100' : 'opacity-0 pointer-events-none scale-95 translate-y-8'
                             }`}
                         style={{
                             maskImage: 'linear-gradient(to bottom, transparent 0%, black 25%, black 75%, transparent 100%)',
@@ -228,9 +219,9 @@ export const FullPlayer: React.FC = () => {
                                 return (
                                     <p
                                         key={index}
-                                        className={`text-[28px] font-bold leading-tight tracking-tight transition-all duration-300 ease-out origin-left cursor-pointer ${isActive
-                                            ? 'text-white scale-105 blur-none opacity-100 translate-x-2'
-                                            : 'text-white/40 scale-100 blur-[1.5px] opacity-40 hover:opacity-70 hover:blur-none'
+                                        className={`text-[28px] font-bold leading-tight tracking-tight transition-all duration-500 ease-out origin-left cursor-pointer py-2 ${isActive
+                                            ? 'text-white scale-105 blur-none opacity-100 translate-x-4'
+                                            : 'text-white/40 scale-100 blur-[2px] opacity-30 hover:opacity-70 hover:blur-none'
                                             }`}
                                         onClick={() => seekTo(line.timestamp)}
                                     >
@@ -247,7 +238,7 @@ export const FullPlayer: React.FC = () => {
                 </div>
 
                 {/* Player Controls Container - Shrinkable but content stays fixed size */}
-                <div className={`flex flex-col gap-2 sm:gap-4 mt-auto shrink-0 transition-opacity duration-300 ${showLyrics ? 'bg-black/20 backdrop-blur-xl -mx-6 px-6 py-6 rounded-t-3xl border-t border-white/5' : ''}`}>
+                <div className={`flex flex-col gap-2 sm:gap-4 mt-auto shrink-0 transition-opacity duration-300 ${isLyricsVisible ? 'bg-black/20 backdrop-blur-xl -mx-6 px-6 py-6 rounded-t-3xl border-t border-white/5' : ''}`}>
 
                     {/* Song Info */}
                     <div className="flex items-center justify-between mb-1">
@@ -335,18 +326,15 @@ export const FullPlayer: React.FC = () => {
                     {/* Volume & Accessories */}
                     <div className="flex items-center justify-between pt-2">
                         <button
-                            onClick={() => {
-                                if (!showLyrics) fetchLyricsManually();
-                                setShowLyrics(!showLyrics);
-                            }}
-                            className={`p-3 rounded-xl transition duration-300 ${showLyrics
+                            onClick={toggleLyrics}
+                            className={`p-3 rounded-xl transition duration-300 ${isLyricsVisible
                                 ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-110'
                                 : 'text-white/60 hover:text-white hover:bg-white/10'
                                 }`}
                             disabled={videoMode}
                             style={{ opacity: videoMode ? 0.3 : 1 }}
                         >
-                            <MessageSquareQuote size={22} strokeWidth={showLyrics ? 2.5 : 2} />
+                            <MessageSquareQuote size={22} strokeWidth={isLyricsVisible ? 2.5 : 2} />
                         </button>
 
                         {/* Animated Volume Pill */}

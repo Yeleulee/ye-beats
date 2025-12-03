@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>YouTube API Tester</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .error {
+            border-left-color: #f44336;
+        }
+
+        .warning {
+            border-left-color: #ff9800;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+
+        .status.ok {
+            background: #4CAF50;
+        }
+
+        .status.error {
+            background: #f44336;
+        }
+
+        .status.warning {
+            background: #ff9800;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔧 YouTube API Diagnostic Tool</h1>
+
+    <div class="test-section">
+        <h2>Current Configuration</h2>
+        <div id="config"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Quick Tests</h2>
+        <button onclick="testSimpleSearch()">Test Simple Search</button>
+        <button onclick="testVideoDetails()">Test Video Details</button>
+        <button onclick="testTrending()">Test Trending</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const API_KEY = 'AIzaSyAYOFHxyKNy_49L0AH53ORx3ArRbsmpSSI';
+        const BASE_URL = 'https://www.googleapis.com/youtube/v3';
+
+        // Display config
+        document.getElementById('config').innerHTML = `
+            <p><strong>API Key:</strong> ${API_KEY.substring(0, 15)}...${API_KEY.substring(API_KEY.length - 5)}</p>
+            <p><strong>API Key Length:</strong> ${API_KEY.length} characters ${API_KEY.length === 39 ? '✅' : '❌ (should be 39)'}</p>
+            <p><strong>Base URL:</strong> ${BASE_URL}</p>
+        `;
+
+        function addResult(title, content, type = 'ok') {
+            const div = document.createElement('div');
+            div.className = `test-section ${type}`;
+            div.innerHTML = `
+                <h3>${title}</h3>
+                ${content}
+            `;
+            document.getElementById('results').appendChild(div);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testSimpleSearch() {
+            const testQuery = 'test song';
+            addResult('🔍 Testing Search API', `<p>Searching for: "${testQuery}"</p><p>Please wait...</p>`);
+
+            try {
+                const url = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(testQuery)}&type=video&maxResults=3&key=${API_KEY}`;
+                console.log('Search URL:', url);
+
+                const startTime = Date.now();
+                const response = await fetch(url);
+                const responseTime = Date.now() - startTime;
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const resultHtml = `
+                        <span class="status ok">✅ SUCCESS</span>
+                        <p><strong>Status:</strong> ${response.status} OK</p>
+                        <p><strong>Response Time:</strong> ${responseTime}ms</p>
+                        <p><strong>Results Found:</strong> ${data.items?.length || 0}</p>
+                        ${data.items?.length > 0 ? `
+                            <p><strong>First Result:</strong> ${data.items[0].snippet.title}</p>
+                            <p><strong>Video ID:</strong> ${data.items[0].id.videoId}</p>
+                        ` : ''}
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                    addResult('✅ Search API - Success', resultHtml, 'ok');
+                } else {
+                    const errorHtml = `
+                        <span class="status error">❌ FAILED</span>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Status Text:</strong> ${response.statusText}</p>
+                        ${data.error ? `
+                            <p><strong>Error Code:</strong> ${data.error.code}</p>
+                            <p><strong>Error Message:</strong> ${data.error.message}</p>
+                            <p><strong>Error Reason:</strong> ${data.error.errors?.[0]?.reason || 'N/A'}</p>
+                        ` : ''}
+                        <details>
+                            <summary>Full Error Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                        ${response.status === 403 ? `
+                            <div style="background: #ff9800; color: black; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                                <strong>⚠️ QUOTA EXCEEDED</strong><br>
+                                This API key has exceeded its daily quota limit.<br>
+                                Solutions:<br>
+                                • Wait 24 hours for quota reset<br>
+                                • Get a new API key from Google Cloud Console
+                            </div>
+                        ` : ''}
+                        ${response.status === 400 ? `
+                            <div style="background: #f44336; padding: 10px; margin-top: 10px; border-radius: 4px;">
+                                <strong>❌ BAD REQUEST</strong><br>
+                                The API key or request format is invalid.
+                            </div>
+                        ` : ''}
+                    `;
+                    addResult('❌ Search API - Failed', errorHtml, 'error');
+                }
+            } catch (error) {
+                const errorHtml = `
+                    <span class="status error">❌ NETWORK ERROR</span>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <pre>${error.stack}</pre>
+                `;
+                addResult('❌ Search API - Network Error', errorHtml, 'error');
+            }
+        }
+
+        async function testVideoDetails() {
+            addResult('📹 Testing Video Details API', `<p>Fetching details for test video...</p>`);
+
+            try {
+                const testVideoId = 'dQw4w9WgXcQ'; // Rick Roll - always available
+                const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${testVideoId}&key=${API_KEY}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok && data.items && data.items.length > 0) {
+                    const video = data.items[0];
+                    const resultHtml = `
+                        <span class="status ok">✅ SUCCESS</span>
+                        <p><strong>Video:</strong> ${video.snippet.title}</p>
+                        <p><strong>Channel:</strong> ${video.snippet.channelTitle}</p>
+                        <p><strong>Embeddable:</strong> ${video.status.embeddable ? '✅ Yes' : '❌ No'}</p>
+                        <p><strong>Duration:</strong> ${video.contentDetails.duration}</p>
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                    addResult('✅ Video Details - Success', resultHtml, 'ok');
+                } else {
+                    addResult('❌ Video Details - Failed', `<pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult('❌ Video Details - Error', `<p>${error.message}</p>`, 'error');
+            }
+        }
+
+        async function testTrending() {
+            addResult('🔥 Testing Trending API', `<p>Fetching trending videos...</p>`);
+
+            try {
+                const url = `${BASE_URL}/videos?part=snippet&chart=mostPopular&videoCategoryId=10&maxResults=5&regionCode=US&key=${API_KEY}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (response.ok && data.items) {
+                    const resultHtml = `
+                        <span class="status ok">✅ SUCCESS</span>
+                        <p><strong>Trending Videos Found:</strong> ${data.items.length}</p>
+                        <ul>
+                            ${data.items.slice(0, 3).map(v => `<li>${v.snippet.title}</li>`).join('')}
+                        </ul>
+                        <details>
+                            <summary>Full Response</summary>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </details>
+                    `;
+                    addResult('✅ Trending API - Success', resultHtml, 'ok');
+                } else {
+                    addResult('❌ Trending API - Failed', `<pre>${JSON.stringify(data, null, 2)}</pre>`, 'error');
+                }
+            } catch (error) {
+                addResult('❌ Trending API - Error', `<p>${error.message}</p>`, 'error');
+            }
+        }
+
+        // Auto-run on load
+        window.onload = () => {
+            addResult('🎯 Auto-Testing', '<p>Running automatic diagnostic...</p>');
+            testSimpleSearch();
+        };
+    </script>
+</body>
+
+</html>
