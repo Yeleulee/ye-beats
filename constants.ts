@@ -8,7 +8,7 @@ export const THEME = {
   navBar: 'rgba(18, 18, 18, 0.95)',
 };
 
-export const YOUTUBE_API_KEY = 'AIzaSyAYOFHxyKNy_49L0AH53ORx3ArRbsmpSSI';
+export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || '';
 
 // Fallback IDs if API quota is reached
 // Using NoCopyrightSounds (NCS) which are globally embeddable
