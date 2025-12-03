@@ -72,6 +72,19 @@ Access to fetch at 'https://www.googleapis.com/youtube/v3/...' has been blocked 
 - If it does, check if you're using browser key restrictions
 - Remove HTTP referrer restrictions in Google Cloud Console
 
+## Testing Your Current API Key
+
+Run this in the browser console when the app is loaded:
+
+```javascript
+// Test search
+fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&q=test&type=video&maxResults=1&key=<YOUR_API_KEY>')
+  .then(r => r.json())
+  .then(console.log)
+  .catch(console.error);
+```
+
+**Expected Response (if working):**
 ```json
 {
   "kind": "youtube#searchListResponse",

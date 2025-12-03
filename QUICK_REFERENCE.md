@@ -6,6 +6,19 @@
 1. Open http://localhost:5173
 2. Click search icon (🔍)
 3. Type song name
+4. Press Enter
+5. Check browser console (`F12`) for logs
+
+### Method 2: Console Test
+```javascript
+// Paste this in browser console:
+fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&q=test&type=video&maxResults=1&key=<YOUR_API_KEY>')
+  .then(r => r.json())
+  .then(d => console.log(d.items ? '✅ Working!' : '❌ Error:', d))
+```
+
+## 📊 Console Log Guide
+
 | Icon | Meaning |
 |------|---------|
 | 🔍 | Search started |

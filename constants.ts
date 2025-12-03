@@ -8,8 +8,7 @@ export const THEME = {
   navBar: 'rgba(18, 18, 18, 0.95)',
 };
 
-// Check both VITE_ prefixed (standard) and non-prefixed (legacy/Vercel)
-export const YOUTUBE_API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY || process.env.YOUTUBE_API_KEY || '';
+export const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
 
 // Fallback IDs if API quota is reached
 // Using NoCopyrightSounds (NCS) which are globally embeddable
