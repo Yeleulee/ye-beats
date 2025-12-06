@@ -25,6 +25,7 @@ export const Search: React.FC<Props> = ({ onBack }) => {
   const [results, setResults] = useState<Song[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const { playSong, addToQueue } = usePlayer();
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export const Search: React.FC<Props> = ({ onBack }) => {
 
     saveToHistory(query.trim());
     setIsSearching(true);
+    setHasSearched(true);
     try {
         const songs = await searchYouTube(query);
         setResults(songs);
@@ -65,6 +67,7 @@ export const Search: React.FC<Props> = ({ onBack }) => {
     setQuery(term);
     saveToHistory(term);
     setIsSearching(true);
+    setHasSearched(true);
     searchYouTube(term).then(res => {
       setResults(res);
       setIsSearching(false);
@@ -116,15 +119,13 @@ export const Search: React.FC<Props> = ({ onBack }) => {
       </div>
 
       <div className="px-5 mt-6 max-w-5xl mx-auto">
-        {results.length > 0 || isSearching ? (
+        {isSearching ? (
+             <div className="flex justify-center py-12">
+                 <div className="w-8 h-8 border-2 border-[#FA2D48] border-t-transparent rounded-full animate-spin"></div>
+             </div>
+        ) : results.length > 0 ? (
              <div className="space-y-4">
-                {isSearching && (
-                    <div className="flex justify-center py-12">
-                        <div className="w-8 h-8 border-2 border-[#FA2D48] border-t-transparent rounded-full animate-spin"></div>
-                    </div>
-                )}
-                
-                {!isSearching && results.map((song) => (
+                {results.map((song) => (
                   <div
                     key={song.id}
                     className="flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition cursor-pointer group"
@@ -144,8 +145,14 @@ export const Search: React.FC<Props> = ({ onBack }) => {
                   </div>
                 ))}
              </div>
+        ) : hasSearched && query ? (
+             <div className="flex flex-col items-center justify-center py-20 text-center">
+                <p className="text-2xl mb-2">🤔</p>
+                <h3 className="text-white font-bold text-lg">No matches found</h3>
+                <p className="text-gray-500 text-sm">Try searching for a different keyword</p>
+             </div>
         ) : (
-            <div className="animate-in slide-in-from-bottom-5 duration-500">
+             <div className="animate-in slide-in-from-bottom-5 duration-500">
                 {/* Search History */}
                 {searchHistory.length > 0 && (
                      <div className="mb-8">

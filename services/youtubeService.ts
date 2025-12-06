@@ -133,11 +133,11 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
     try {
         console.log(`🔍 Searching YouTube for: "${query}"`);
 
-        // STRATEGY: Use more aggressive filtering and prioritize music content
+        // STRATEGY: Try direct query first for best relevance, then music-specific
         const searchTerms = [
-            `${query} official audio`,
-            `${query} music`,
             query,
+            `${query} official audio`,
+            `${query} lyrics`,
         ];
 
         let allResults: Song[] = [];
@@ -147,8 +147,9 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
         for (const searchTerm of searchTerms) {
             if (allResults.length >= 15) break;
 
-            // Add videoCategoryId=10 (Music) and safeSearch=none for better results
-            const searchUrl = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&videoCategoryId=10&maxResults=25&safeSearch=none&videoSyndicated=true&key=${apiKey}`;
+            // RELAXED SEARCH: Removed videoCategoryId=10 to find music that might be categorized differently
+            // Removed videoSyndicated=true to allow all playable videos
+            const searchUrl = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=25&safeSearch=none&key=${apiKey}`;
 
             console.log(`📡 Fetching search results for: "${searchTerm}"`);
             const searchRes = await fetch(searchUrl);
@@ -233,12 +234,12 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
             });
         }
 
-        console.log(`🎵 Total results found: ${allResults.length}`);
-        return allResults.length > 0 ? allResults.slice(0, 20) : MOCK_SONGS;
+            console.log(`🎵 Total results found: ${allResults.length}`);
+        return allResults.length > 0 ? allResults.slice(0, 20) : [];
 
     } catch (error) {
         console.error("💥 YouTube API Error:", error);
-        return MOCK_SONGS; // Fallback to mock data if quota exceeded or error
+        return []; 
     }
 };
 
@@ -247,7 +248,7 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
         const apiKey = YOUTUBE_API_KEY?.trim();
         if (!apiKey || apiKey.length < 10) {
             console.error('❌ YouTube API key is not configured properly');
-            return MOCK_SONGS;
+            return []; // No mock data
         }
 
         try {
@@ -260,11 +261,7 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
                 console.error(`❌ Trending API error (${res.status}):`, errorData);
-
-                if (res.status === 403 || res.status === 429) {
-                    console.warn('⚠️ YouTube API quota exceeded for trending videos');
-                }
-                return MOCK_SONGS;
+                return [];
             }
 
             const data = await res.json();
@@ -283,10 +280,6 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
                     notMadeForKids &&
                     uploadStatus;
 
-                if (!isValid) {
-                    console.log(`⏭️ Skipping trending: ${snippet?.title} (public: ${isPublic}, kids: ${!notMadeForKids}, processed: ${uploadStatus})`);
-                }
-
                 return isValid;
             });
 
@@ -294,10 +287,10 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
 
             // Return top 20 valid videos
             const results = embeddableItems.slice(0, 20).map(mapYouTubeItemToSong);
-            return results.length > 0 ? results : MOCK_SONGS;
+            return results;
         } catch (error) {
             console.error("💥 YouTube Trending Error:", error);
-            return MOCK_SONGS;
+            return [];
         }
     });
 };
