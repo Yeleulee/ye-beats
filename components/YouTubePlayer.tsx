@@ -324,12 +324,13 @@ export const YouTubePlayer: React.FC = () => {
         }
     }, [volume]);
 
-    return (
+    // Memoize the container to prevent React from touching the DOM too often
+    return React.useMemo(() => (
         <div
             ref={containerRef}
             className="w-full h-full"
         >
             <div id="youtube-player-mount" className="w-full h-full"></div>
         </div>
-    );
+    ), []);
 };
