@@ -6,26 +6,7 @@ import { getTrendingVideos, searchYouTube, getBillboardTopSongs } from '../servi
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
 
-interface ArtistCardProps {
-    song: Song;
-    onClick: () => void;
-}
 
-const ArtistCard: React.FC<ArtistCardProps> = ({ song, onClick }) => (
-    <div 
-        className="flex flex-col items-center gap-3 cursor-pointer group w-32 md:w-40 flex-none snap-start"
-        onClick={onClick}
-    >
-        <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden shadow-lg border-2 border-transparent group-hover:border-[#FA2D48] transition-all relative">
-             <img src={song.coverUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-             <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Play fill="white" className="w-10 h-10 text-white drop-shadow-lg" />
-             </div>
-        </div>
-        <span className="text-white font-semibold text-[15px] text-center truncate w-full">{song.artist}</span>
-    </div>
-);
 
 export const ListenNow: React.FC = () => {
     const { playSong, setLyricsVisible, addToQueue } = usePlayer();
@@ -83,28 +64,23 @@ export const ListenNow: React.FC = () => {
         }
     };
 
-    const Sections = ({ title, songs, type = 'song' }: { title: string, songs: Song[], type?: 'song' | 'artist' }) => (
+    const Sections = ({ title, songs }: { title: string, songs: Song[] }) => (
         <div className="mb-10">
             <div className="flex items-center justify-between px-5 mb-4">
                 <h2 className="text-[22px] font-bold text-white">{title}</h2>
                 <button className="text-[#FA2D48] text-sm font-medium">See All</button>
             </div>
             <div className="flex overflow-x-auto gap-5 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
-                {songs.map((song, i) => {
-                     if (type === 'artist') {
-                        return <ArtistCard key={song.id || i} song={song} onClick={() => playSong(song)} />;
-                     }
-                     return (
-                        <SongCard
-                            key={song.id || i}
-                            song={song}
-                            onClick={() => playSong(song)}
-                            onPlay={(e) => { e.stopPropagation(); playSong(song); }}
-                            onViewLyrics={(e) => { e.stopPropagation(); playSong(song); setLyricsVisible(true); }}
-                            onAddToQueue={(e) => { e.stopPropagation(); addToQueue(song); }}
-                        />
-                     );
-                })}
+                {songs.map((song, i) => (
+                    <SongCard
+                        key={song.id || i}
+                        song={song}
+                        onClick={() => playSong(song)}
+                        onPlay={(e) => { e.stopPropagation(); playSong(song); }}
+                        onViewLyrics={(e) => { e.stopPropagation(); playSong(song); setLyricsVisible(true); }}
+                        onAddToQueue={(e) => { e.stopPropagation(); addToQueue(song); }}
+                    />
+                ))}
             </div>
         </div>
     );
@@ -174,7 +150,7 @@ export const ListenNow: React.FC = () => {
                     </div>
                 ) : (
                     <>
-                        {topArtistsData.length > 0 && <Sections title="Billboard Top Artists" songs={topArtistsData} type="artist" />}
+                        {topArtistsData.length > 0 && <Sections title="Billboard Hot 100" songs={topArtistsData} />}
                         {trending.length > 0 && <Sections title="Heavy Rotation" songs={[...trending].reverse()} />}
                         {trending.length > 0 && <Sections title="Top Picks" songs={trending} />}
                         
