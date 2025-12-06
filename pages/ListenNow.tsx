@@ -2,11 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { Play, Shuffle, Mic2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
-import { getTrendingVideos, searchYouTube, getPlaylistItems } from '../services/youtubeService';
+import { getTrendingVideos, searchYouTube, getBillboardTopSongs } from '../services/youtubeService';
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
-
-const BILLBOARD_PLAYLIST_ID = 'PL55713C70DAAD3781'; // Billboard Hot 100 Playlist
 
 interface ArtistCardProps {
     song: Song;
@@ -41,7 +39,7 @@ export const ListenNow: React.FC = () => {
             try {
                 const [trendingData, billboardData] = await Promise.all([
                     getTrendingVideos(),
-                    getPlaylistItems(BILLBOARD_PLAYLIST_ID)
+                    getBillboardTopSongs()
                 ]);
                 
                 setTrending(trendingData);
@@ -69,7 +67,7 @@ export const ListenNow: React.FC = () => {
     const handleShufflePlay = async () => {
         try {
             // Use cached playlist items for shuffle
-            const songs = await getPlaylistItems(BILLBOARD_PLAYLIST_ID);
+            const songs = await getBillboardTopSongs();
             if (songs.length > 0) {
                 const shuffled = [...songs].sort(() => 0.5 - Math.random());
                 playSong(shuffled[0], shuffled.slice(1));

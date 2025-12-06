@@ -123,9 +123,6 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
     // We do NOT cache search results by default as they are dynamic user actions
     // But we can optionally cache "static" searches like "Taylor Swift top hit" if we used a consistent key
     // For now, leaving as is.
-    // We do NOT cache search results by default as they are dynamic user actions
-    // But we can optionally cache "static" searches like "Taylor Swift top hit" if we used a consistent key
-    // For now, leaving as is.
 
     try {
         console.log(`🔍 Searching YouTube for: "${query}"`);
@@ -146,8 +143,6 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 
             // RELAXED SEARCH: Removed videoCategoryId=10 to find music that might be categorized differently
             // Removed videoSyndicated=true to allow all playable videos
-            // RELAXED SEARCH: Removed videoCategoryId=10 to find music that might be categorized differently
-            // Removed videoSyndicated=true to allow all playable videos
             const searchRes = await fetchYouTubeWithRotation(key =>
                 `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=25&safeSearch=none&key=${key}`
             );
@@ -156,7 +151,6 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
                 const errorData = await searchRes.json().catch(() => ({}));
                 console.error(`❌ Search API error (${searchRes.status}):`, errorData);
 
-                // If quota exceeded, stop trying and return what we have or mock data
                 // If quota exceeded, stop trying and return what we have or mock data
                 if (searchRes.status === 403 || searchRes.status === 429) {
                     // This block might not be reached if fetchYouTubeWithRotation handles it, 
@@ -288,6 +282,56 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
         } catch (error) {
             console.error("💥 YouTube Trending Error:", error);
             return [];
+        }
+    });
+};
+
+export const getBillboardTopSongs = async (): Promise<Song[]> => {
+    return fetchWithCache('billboard_top_100', async () => {
+        try {
+            // 1. Find a valid Billboard playlist
+            console.log('🏆 Searching for fresh Billboard chart...');
+            const searchRes = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/search?part=id&q=Billboard%20Hot%20100&type=playlist&maxResults=1&key=${key}`
+            );
+
+            if (!searchRes.ok) throw new Error('Failed to find playlist');
+            const searchData = await searchRes.json();
+            
+            const playlistId = searchData.items?.[0]?.id?.playlistId;
+            if (!playlistId) throw new Error('No playlist found');
+
+            console.log(`✅ Found Billboard Playlist ID: ${playlistId}`);
+
+            // 2. Fetch items from this playlist
+            // Reuse the logic but call directly to avoid double caching if we called getPlaylistItems(id)
+            const listRes = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=30&key=${key}`
+            );
+
+            if (!listRes.ok) throw new Error('Failed to fetch playlist items');
+            const listData = await listRes.json();
+
+            // 3. Map to Song
+            const songs = listData.items.map((item: any) => {
+                const snippet = item.snippet;
+                const thumbnail = snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url;
+                return {
+                    id: item.id,
+                    youtubeId: snippet.resourceId.videoId,
+                    title: snippet.title,
+                    artist: snippet.videoOwnerChannelTitle || snippet.channelTitle,
+                    album: "Billboard Hot 100",
+                    coverUrl: thumbnail,
+                    duration: "3:00"
+                };
+            }).filter((s: Song) => s.title !== "Private video" && s.title !== "Deleted video");
+
+            return songs;
+
+        } catch (error) {
+            console.error("💥 Billboard Fetch Error:", error);
+            return MOCK_SONGS;
         }
     });
 };
