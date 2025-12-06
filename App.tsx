@@ -5,6 +5,8 @@ import { BottomNav } from './components/BottomNav';
 import { MiniPlayer } from './components/MiniPlayer';
 import { FullPlayer } from './components/FullPlayer';
 import { YouTubePlayer } from './components/YouTubePlayer';
+
+import { ListenNow } from './pages/ListenNow';
 import { Home } from './pages/Home';
 import { Search } from './pages/Search';
 import { Library } from './pages/Library';
@@ -33,15 +35,17 @@ const AppContent = () => {
   const renderScreen = () => {
     switch (activeTab) {
       case Tab.HOME:
+        return <ListenNow />;
+      case Tab.NEW:
         return <Home onSearchPress={() => handleTabChange(Tab.SEARCH)} />;
-      case Tab.EXPLORE:
-        return <Explore />;
+      case Tab.RADIO:
+        return <Explore />; // Using Explore as placeholder for Radio/Other
       case Tab.LIBRARY:
         return <Library />;
       case Tab.SEARCH:
         return <Search onBack={handleBackFromSearch} />;
       default:
-        return <Home onSearchPress={() => handleTabChange(Tab.SEARCH)} />;
+        return <ListenNow />;
     }
   };
 

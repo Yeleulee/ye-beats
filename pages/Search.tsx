@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Mic, X, Search as SearchIcon, Clock, ListPlus } from 'lucide-react';
+import { ArrowLeft, Mic, X, Search as SearchIcon, Clock, ChevronRight, Play } from 'lucide-react';
 import { searchYouTube } from '../services/youtubeService';
 import { Song } from '../types';
 import { usePlayer } from '../context/PlayerContext';
@@ -8,6 +8,17 @@ import { usePlayer } from '../context/PlayerContext';
 interface Props {
   onBack: () => void;
 }
+
+const CATEGORIES = [
+  { id: '1', name: 'Replay 2025', color: 'bg-gradient-to-br from-orange-400 via-pink-500 to-purple-600' },
+  { id: '2', name: 'Hip-Hop', color: 'bg-gradient-to-br from-blue-400 to-blue-700' },
+  { id: '3', name: 'R&B', color: 'bg-gradient-to-br from-indigo-400 to-purple-700' },
+  { id: '4', name: 'Hits', color: 'bg-gradient-to-br from-yellow-400 to-yellow-600' },
+  { id: '5', name: 'Holiday', color: 'bg-gradient-to-br from-red-500 to-pink-700' },
+  { id: '6', name: 'Best of 2025', color: 'bg-gradient-to-br from-gray-700 to-gray-900' },
+  { id: '7', name: 'Radio', color: 'bg-gradient-to-br from-red-500 to-red-600' },
+  { id: '8', name: 'Spatial Audio', color: 'bg-gradient-to-br from-rose-400 to-rose-600' },
+];
 
 export const Search: React.FC<Props> = ({ onBack }) => {
   const [query, setQuery] = useState('');
@@ -24,7 +35,7 @@ export const Search: React.FC<Props> = ({ onBack }) => {
   }, []);
 
   const saveToHistory = (term: string) => {
-    const newHistory = [term, ...searchHistory.filter(h => h !== term)].slice(0, 10);
+    const newHistory = [term, ...searchHistory.filter(h => h !== term)].slice(0, 5);
     setSearchHistory(newHistory);
     localStorage.setItem('search_history', JSON.stringify(newHistory));
   };
@@ -42,9 +53,12 @@ export const Search: React.FC<Props> = ({ onBack }) => {
 
     saveToHistory(query.trim());
     setIsSearching(true);
-    const songs = await searchYouTube(query);
-    setResults(songs);
-    setIsSearching(false);
+    try {
+        const songs = await searchYouTube(query);
+        setResults(songs);
+    } finally {
+        setIsSearching(false);
+    }
   };
 
   const performSearch = (term: string) => {
@@ -58,131 +72,118 @@ export const Search: React.FC<Props> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#121212] pt-4 pb-32">
-      {/* Search Header */}
-      <div className="sticky top-0 bg-[#121212] z-30 pb-2 border-b border-white/5">
-        <div className="flex items-center gap-2 px-2 max-w-4xl mx-auto w-full">
-          <button onClick={onBack} className="p-2 md:hidden">
-            <ArrowLeft className="text-white" />
-          </button>
-          <form onSubmit={handleSearch} className="flex-1 relative">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search songs, artists, vibes..."
-              className="w-full bg-[#212121] text-white px-4 py-3 pl-12 rounded-full focus:bg-[#303030] transition placeholder-gray-500 outline-none border border-transparent focus:border-white/10"
-              autoFocus
-            />
-            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-            {query.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
-              >
-                <X size={16} className="text-gray-400" />
-              </button>
+    <div className="min-h-screen bg-[#000000] pb-32">
+      {/* Sticky Header Zone */}
+      <div className="sticky top-0 z-40 bg-[#000000]/90 backdrop-blur-xl border-b border-white/5 pb-4 pt-4 md:pt-8 transition-colors duration-500">
+        <div className="px-5 max-w-5xl mx-auto">
+          {/* Title Row (Hidden when searching if improved interaction preferred, but maintained for now) */}
+          <div className="flex items-center justify-between mb-4">
+             <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Search</h1>
+             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center overflow-hidden border border-white/10">
+                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" />
+             </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1 group">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 z-10 transition-colors group-focus-within:text-white" size={18} />
+                <form onSubmit={handleSearch} className="w-full">
+                    <input
+                        type="text"
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        placeholder="Artists, Songs, Lyrics, and More"
+                        className="w-full bg-[#1C1C1E] text-white h-10 rounded-xl pl-10 pr-10 placeholder-gray-500 focus:bg-[#2C2C2E] transition-all outline-none text-[17px]"
+                    />
+                </form>
+                {query && (
+                    <button 
+                        onClick={() => setQuery('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                    >
+                        <X size={16} fill="currentColor" />
+                    </button>
+                )}
+            </div>
+            {query && (
+                 <button onClick={() => { setQuery(''); setResults([]); }} className="text-[#FA2D48] text-[17px]">
+                    Cancel
+                 </button>
             )}
-          </form>
-          <button className="p-2 bg-[#212121] rounded-full md:hidden">
-            <Mic size={20} className="text-white" />
-          </button>
+          </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="px-4 mt-4 max-w-4xl mx-auto">
-        {isSearching ? (
-          <div className="flex flex-col items-center justify-center mt-20 space-y-4">
-            <div className="w-8 h-8 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-400 text-sm">Searching YouTube...</p>
-          </div>
-        ) : results.length > 0 ? (
-          <div className="space-y-4">
-            <h3 className="text-gray-400 text-sm font-medium uppercase tracking-wide">Top Results</h3>
-            {results.map((song) => (
-              <div
-                key={song.id}
-                className="group flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition cursor-pointer"
-                onClick={() => playSong(song)}
-              >
-                <img src={song.coverUrl} alt={song.title} className="w-14 h-14 rounded object-cover" />
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-white font-medium truncate group-hover:text-red-500 transition-colors">{song.title}</h4>
-                  <p className="text-gray-400 text-sm truncate">{song.artist} • {song.album}</p>
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addToQueue(song);
-                  }}
-                  className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition opacity-0 group-hover:opacity-100"
-                  title="Add to Queue"
-                >
-                  <ListPlus size={20} />
-                </button>
-                <span className="text-gray-500 text-xs whitespace-nowrap">{song.duration}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-8 space-y-8">
-            {/* Recent Searches */}
-            {searchHistory.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-white font-bold">Recent Searches</h3>
-                  <button
-                    onClick={() => {
-                      setSearchHistory([]);
-                      localStorage.removeItem('search_history');
-                    }}
-                    className="text-xs text-red-500 font-medium hover:text-red-400"
-                  >
-                    Clear
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  {searchHistory.map((term, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 cursor-pointer group"
-                      onClick={() => performSearch(term)}
-                    >
-                      <div className="flex items-center gap-3 text-gray-300 group-hover:text-white">
-                        <Clock size={16} className="text-gray-500" />
-                        <span>{term}</span>
-                      </div>
-                      <button
-                        onClick={(e) => removeFromHistory(term, e)}
-                        className="text-gray-500 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X size={16} />
-                      </button>
+      <div className="px-5 mt-6 max-w-5xl mx-auto">
+        {results.length > 0 || isSearching ? (
+             <div className="space-y-4">
+                {isSearching && (
+                    <div className="flex justify-center py-12">
+                        <div className="w-8 h-8 border-2 border-[#FA2D48] border-t-transparent rounded-full animate-spin"></div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Trending */}
-            <div>
-              <h3 className="text-white font-bold mb-4">Trending Searches</h3>
-              <div className="flex flex-wrap gap-3">
-                {['Lo-fi beats', 'Top hits 2024', 'Workout mix', 'The Weeknd', 'Rock classics'].map(term => (
-                  <button
-                    key={term}
-                    onClick={() => performSearch(term)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#212121] rounded-full text-sm font-medium text-gray-300 hover:text-white transition hover:bg-[#303030]"
+                )}
+                
+                {!isSearching && results.map((song) => (
+                  <div
+                    key={song.id}
+                    className="flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition cursor-pointer group"
+                    onClick={() => playSong(song)}
                   >
-                    <SearchIcon size={14} />
-                    {term}
-                  </button>
+                    <img src={song.coverUrl} alt={song.title} className="w-12 h-12 rounded-[4px] object-cover shadow-sm bg-[#333]" />
+                    <div className="flex-1 min-w-0 flex flex-col justify-center border-b border-white/5 pb-2 ml-1 h-14">
+                      <h4 className="text-white text-[16px] font-normal truncate">{song.title}</h4>
+                      <p className="text-gray-400 text-[14px] truncate">{song.artist} • {song.album}</p>
+                    </div>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); addToQueue(song); }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-2"
+                    >
+                        <ChevronRight className="text-gray-500" />
+                    </button>
+                  </div>
                 ))}
-              </div>
+             </div>
+        ) : (
+            <div className="animate-in slide-in-from-bottom-5 duration-500">
+                {/* Search History */}
+                {searchHistory.length > 0 && (
+                     <div className="mb-8">
+                        <div className="flex justify-between items-center mb-0 px-1">
+                            <h3 className="text-[19px] font-bold text-white">Recent Searches</h3>
+                            <button onClick={() => setSearchHistory([])} className="text-[#FA2D48] text-[15px]">Clear</button>
+                        </div>
+                        <div className="divide-y divide-white/10">
+                            {searchHistory.map((term, i) => (
+                                <div key={i} onClick={() => performSearch(term)} className="py-3 flex items-center justify-between cursor-pointer active:opacity-50">
+                                    <span className="text-[17px] text-[#FA2D48]">{term}</span>
+                                    <ChevronRight size={16} className="text-gray-600" />
+                                </div>
+                            ))}
+                        </div>
+                     </div>
+                )}
+
+                {/* Categories Grid */}
+                <div>
+                    <h3 className="text-[19px] font-bold text-white mb-4 px-1">Browse Categories</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {CATEGORIES.map((cat) => (
+                            <div 
+                                key={cat.id} 
+                                onClick={() => performSearch(cat.name + " music playlist")}
+                                className={`h-28 md:h-36 rounded-xl relative overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95 transition-transform duration-200 ${cat.color}`}
+                            >
+                                <span className="absolute bottom-3 left-3 font-bold text-white text-[15px] md:text-lg leading-tight w-2/3">
+                                    {cat.name}
+                                </span>
+                                {/* Decorative elements to simulate cover art collage */}
+                                <div className="absolute -right-4 -bottom-2 w-16 h-16 bg-white/20 transform rotate-[25deg] rounded-md backdrop-blur-sm"></div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
-          </div>
         )}
       </div>
     </div>

@@ -17,9 +17,11 @@ export interface Playlist {
   songs: Song[];
 }
 
+
 export enum Tab {
   HOME = 'Home',
-  EXPLORE = 'Explore',
+  NEW = 'New',
+  RADIO = 'Radio',
   LIBRARY = 'Library',
   SEARCH = 'Search'
 }

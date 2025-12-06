@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Play, ArrowLeft } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { getTrendingVideos, searchYouTube } from '../services/youtubeService';
 import { Song } from '../types';
@@ -11,15 +11,25 @@ interface Props {
     onSearchPress: () => void;
 }
 
+const EXPLORE_LINKS = [
+    'Spatial Audio',
+    'Music Videos',
+    'Charts',
+    'Browse by Genre',
+    'Decades',
+    'Moods and Activities'
+];
+
 export const Home: React.FC<Props> = ({ onSearchPress }) => {
     const { playSong, setLyricsVisible, addToQueue } = usePlayer();
     const [recommended, setRecommended] = useState<Song[]>([]);
     const [trending, setTrending] = useState<Song[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Apple Music style date
-    const today = new Date();
-    const dateString = today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+    
+    // Sub-view state
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [categorySongs, setCategorySongs] = useState<Song[]>([]);
+    const [loadingCategory, setLoadingCategory] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -42,6 +52,19 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
         fetchData();
     }, []);
 
+    const handleCategoryClick = async (category: string) => {
+        setSelectedCategory(category);
+        setLoadingCategory(true);
+        try {
+            const songs = await searchYouTube(category + " music");
+            setCategorySongs(songs);
+        } catch (e) {
+            console.error("Failed to load category", e);
+        } finally {
+            setLoadingCategory(false);
+        }
+    };
+
     const SkeletonCard = () => (
         <div className="flex-none w-44 sm:w-48 snap-start">
             <div className="aspect-square w-full mb-3 bg-white/5 rounded-xl animate-pulse"></div>
@@ -50,30 +73,19 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
         </div>
     );
 
-    const SkeletonSection = () => (
-        <div className="mb-12">
-            <div className="flex items-center justify-between px-6 mb-4">
-                <div className="h-8 w-48 bg-white/5 rounded animate-pulse"></div>
-            </div>
-            <div className="flex overflow-x-auto space-x-6 px-6 pb-4 no-scrollbar">
-                {[1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
-            </div>
-        </div>
-    );
-
-    const SectionHeader = ({ title }: { title: string }) => (
-        <div className="flex items-center justify-between px-6 mb-5 group cursor-pointer">
-            <h2 className="text-2xl font-bold text-white tracking-tight flex items-center group-hover:text-red-500 transition-colors">
+    const SectionHeader = ({ title, showChevron = true }: { title: string, showChevron?: boolean }) => (
+        <div className="flex items-center justify-between px-5 mb-3 group cursor-pointer">
+            <h2 className="text-[22px] font-bold text-white tracking-tight flex items-center">
                 {title}
-                <ChevronRight size={24} className="text-neutral-500 ml-1 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
+                {showChevron && <ChevronRight size={20} className="text-neutral-500 ml-1 opacity-70" />}
             </h2>
         </div>
     );
 
     const SongSection = ({ title, songs }: { title: string, songs: Song[] }) => (
-        <div className="mb-12">
+        <div className="mb-8 border-t border-white/5 pt-6">
             <SectionHeader title={title} />
-            <div className="flex overflow-x-auto space-x-5 px-6 pb-8 no-scrollbar snap-x scroll-pl-6">
+            <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
                 {songs.map((song) => (
                     <SongCard
                         key={song.id}
@@ -98,71 +110,133 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
         </div>
     );
 
-    return (
-        <div className="pb-32 bg-[#121212] min-h-screen overflow-hidden">
-            {/* Top Bar with Profile & Search */}
-            <div className="md:hidden sticky top-0 z-30 bg-[#121212]/95 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg text-white cursor-pointer hover:scale-110 transition-transform duration-300 relative overflow-hidden">
-                    <span className="relative z-10">V</span>
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
+    // Detail View
+    if (selectedCategory) {
+         return (
+            <div className="pb-32 bg-[#000000] min-h-screen overflow-hidden">
+                 <div className="pt-4 md:pt-10 bg-[#000000] sticky top-0 z-20 pb-2 bg-opacity-90 backdrop-blur-xl border-b border-white/5">
+                    <div className="px-5 flex items-center gap-2">
+                         <button onClick={() => setSelectedCategory(null)} className="flex items-center text-[#FA2D48] text-[17px] -ml-2 pr-2">
+                            <ArrowLeft size={22} />
+                            Back
+                        </button>
+                    </div>
+                    <div className="px-5 mt-2">
+                        <h1 className="text-3xl font-bold text-white tracking-tight">{selectedCategory}</h1>
+                    </div>
                 </div>
-                <button
-                    onClick={onSearchPress}
-                    className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 active:bg-white/20 transition-all group relative overflow-hidden"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 group-hover:scale-110 transition-transform relative z-10"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-                    <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-pink-500/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </button>
+
+                <div className="px-5 mt-6">
+                    {loadingCategory ? (
+                        <div className="flex flex-col items-center justify-center py-20">
+                            <div className="w-8 h-8 border-2 border-[#FA2D48] border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    ) : (
+                         <div className="space-y-4">
+                            {categorySongs.map((song) => (
+                                <div
+                                    key={song.id}
+                                    className="flex items-center gap-4 p-2 rounded-lg hover:bg-white/5 active:bg-white/10 transition cursor-pointer group"
+                                    onClick={() => playSong(song)}
+                                >
+                                    <img src={song.coverUrl} className="w-12 h-12 rounded-[4px] object-cover shadow-sm bg-[#333]" />
+                                    <div className="flex-1 min-w-0 border-b border-white/5 pb-2 ml-1 h-14 flex flex-col justify-center">
+                                        <h4 className="text-white text-[16px] font-normal truncate group-hover:text-[#FA2D48] transition-colors">{song.title}</h4>
+                                        <p className="text-gray-400 text-[14px] truncate">{song.artist}</p>
+                                    </div>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); addToQueue(song); }}
+                                        className="p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    >
+                                        <ChevronRight className="text-gray-500" />
+                                    </button>
+                                </div>
+                            ))}
+                         </div>
+                    )}
+                </div>
+            </div>
+         )
+    }
+
+    // Main View
+    return (
+        <div className="pb-32 bg-[#000000] min-h-screen overflow-hidden">
+             {/* Header */}
+            <div className="pt-4 md:pt-10 bg-[#000000] sticky top-0 z-20 pb-2 bg-opacity-90 backdrop-blur-xl border-b border-white/5">
+                <div className="px-5 flex items-center justify-between">
+                    <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight" style={{ fontFamily: 'Inter, -apple-system, sans-serif' }}>
+                        New
+                    </h1>
+                     <button
+                        onClick={onSearchPress}
+                        className="w-8 h-8 rounded-full bg-blue-500/0 flex items-center justify-center overflow-hidden border border-white/10"
+                    >
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full object-cover" />
+                    </button>
+                </div>
             </div>
 
-            <div className="pt-6 md:pt-10">
-                {/* Header Date */}
-                <div className="px-6 mb-6">
-                    <div className="text-red-500 text-xs font-bold uppercase tracking-widest mb-2 animate-in fade-in duration-500">
-                        {dateString}
-                    </div>
-                    <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight animate-in slide-in-from-bottom-4 duration-700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-                        Listen Now
-                    </h1>
-                </div>
-
+            <div className="pt-4">
                 {loading ? (
-                    <div className="animate-in fade-in duration-500">
-                        <div className="px-6 mb-8">
-                            <div className="w-full aspect-[21/9] bg-gradient-to-br from-white/5 via-white/3 to-transparent rounded-2xl animate-pulse border border-white/5" />
-                        </div>
-                        <SkeletonSection />
-                        <SkeletonSection />
+                    <div className="animate-in fade-in duration-500 px-5">
+                       <div className="w-full h-64 bg-white/5 rounded-xl animate-pulse mb-8" />
+                       <div className="h-8 w-48 bg-white/5 rounded animate-pulse mb-4" />
+                       <div className="flex gap-4 overflow-hidden">
+                           {[1,2,3].map(i => <SkeletonCard key={i} />)}
+                       </div>
                     </div>
                 ) : (
                     <div className="animate-in fade-in duration-700 slide-in-from-bottom-4">
-                        {/* Hero Section with Top Trending */}
-                        <div className="px-6 mb-10">
-                            <HeroSection
-                                featuredSongs={trending.slice(0, 5)}
-                                onPlay={playSong}
-                            />
-                        </div>
-
-                        {/* Quick Access Pills */}
-                        <div className="px-6 mb-10">
-                            <div className="flex overflow-x-auto gap-3 pb-4 no-scrollbar">
-                                <button className="flex-none px-5 py-3 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-white font-medium text-sm hover:scale-105 transition-transform">
-                                    🔥 Hot Right Now
-                                </button>
-                                <button className="flex-none px-5 py-3 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border border-blue-500/30 text-white font-medium text-sm hover:scale-105 transition-transform">
-                                    🎵 New Releases
-                                </button>
-                                <button className="flex-none px-5 py-3 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 text-white font-medium text-sm hover:scale-105 transition-transform">
-                                    ⭐ Top Charts
-                                </button>
+                        
+                        {/* Coming Soon / Hero Section */}
+                        <div className="px-5 mb-10">
+                            <div className="flex items-center justify-between mb-3 text-white">
+                                <h2 className="text-[22px] font-bold">Coming Soon</h2>
+                                <ChevronRight size={20} className="text-neutral-500" />
+                            </div>
+                            {/* We use the trending data for the hero, but style it as specific cards */}
+                            <div className="flex overflow-x-auto gap-4 no-scrollbar snap-x scroll-pl-5 pb-4">
+                                {trending.slice(0, 4).map((song) => (
+                                    <div 
+                                        key={song.id}
+                                        onClick={() => playSong(song)}
+                                        className="snap-start flex-none w-[85vw] md:w-[45vw] lg:w-[30vw] flex flex-col cursor-pointer group"
+                                    >
+                                        <div className="relative aspect-[16/10] mb-2 overflow-hidden rounded-xl bg-[#222] shadow-lg border border-white/5">
+                                            <img src={song.coverUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider text-white">
+                                                New Release
+                                            </div>
+                                        </div>
+                                        <span className="text-white font-medium text-[15px] truncate">{song.title}</span>
+                                        <span className="text-gray-400 text-[14px] truncate">{song.artist}</span>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        <SongSection title="Top Picks for You" songs={recommended} />
-                        <SongSection title="Trending Now" songs={trending} />
-                        <SongSection title="New Releases" songs={[...trending].reverse()} />
-                        <SongSection title="Chill Vibes" songs={[...recommended].reverse()} />
+                        {/* More to Explore List */}
+                        <div className="px-5 mb-10">
+                            <h2 className="text-[22px] font-bold text-white mb-2">More to Explore</h2>
+                            <div className="border-t border-white/10">
+                                {EXPLORE_LINKS.map((link) => (
+                                    <div 
+                                        key={link} 
+                                        onClick={() => handleCategoryClick(link)}
+                                        className="flex items-center justify-between py-4 border-b border-white/10 cursor-pointer active:bg-white/5 px-2 -mx-2 rounded-lg transition-colors"
+                                    >
+                                        <span className="text-[19px] text-[#FA2D48] font-normal">{link}</span>
+                                        <ChevronRight size={18} className="text-gray-600" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Other Sections */}
+                        <SongSection title="Updated Playlists" songs={recommended} />
+                        <SongSection title="Hot Tracks" songs={trending} />
+                        <SongSection title="'Tis the Season" songs={[...trending].reverse()} />
                     </div>
                 )}
             </div>
