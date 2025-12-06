@@ -1,5 +1,6 @@
 import React from 'react';
-import { Home, Compass, Library, Search, PlusSquare, Heart } from 'lucide-react';
+
+import { Home, Compass, Library, Search, PlusSquare, Heart, Play } from 'lucide-react';
 import { Tab } from '../types';
 
 interface Props {
@@ -10,7 +11,8 @@ interface Props {
 export const Sidebar: React.FC<Props> = ({ currentTab, onTabChange }) => {
     const navItems = [
         { id: Tab.HOME, icon: Home, label: 'Home' },
-        { id: Tab.EXPLORE, icon: Compass, label: 'Explore' },
+        { id: Tab.NEW, icon: Compass, label: 'New' },
+        { id: Tab.RADIO, icon: Play, label: 'Radio' },
         { id: Tab.LIBRARY, icon: Library, label: 'Library' },
         { id: Tab.SEARCH, icon: Search, label: 'Search' },
     ];
@@ -18,11 +20,8 @@ export const Sidebar: React.FC<Props> = ({ currentTab, onTabChange }) => {
     return (
         <div className="w-64 bg-black h-screen fixed left-0 top-0 border-r border-white/10 flex flex-col p-6 z-40">
             {/* Logo */}
-            <div className="flex items-center gap-2 mb-10 px-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 via-pink-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-lg text-white">
-                    V
-                </div>
-                <span className="text-xl font-bold tracking-tight">Vibe Vibe</span>
+            <div className="flex items-center gap-2 mb-10 px-2 mt-2">
+                <span className="text-4xl font-bold text-white tracking-wide" style={{ fontFamily: 'Dancing Script, cursive' }}>Ye beats</span>
             </div>
 
             {/* Main Nav */}

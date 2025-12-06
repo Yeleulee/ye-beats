@@ -43,7 +43,87 @@ const mapYouTubeItemToSong = (item: any): Song => {
     };
 };
 
+
+// Helper for caching
+const fetchWithCache = async <T>(key: string, fetchFn: () => Promise<T>, ttlHours: number = 24): Promise<T> => {
+    const cacheKey = `ye_beats_cache_${key}`;
+    const cached = localStorage.getItem(cacheKey);
+    
+    if (cached) {
+        try {
+            const { timestamp, data } = JSON.parse(cached);
+            const ageHours = (Date.now() - timestamp) / (1000 * 60 * 60);
+            if (ageHours < ttlHours) {
+                console.log(`📦 Serving "${key}" from cache (${ageHours.toFixed(1)}h old)`);
+                return data;
+            }
+        } catch (e) {
+            console.error("Cache parse error", e);
+        }
+    }
+
+    console.log(`🌐 Fetching "${key}" from API`);
+    const data = await fetchFn();
+    
+    // Only cache if we got valid results
+    if (Array.isArray(data) && data.length > 0 && data !== MOCK_SONGS) {
+         localStorage.setItem(cacheKey, JSON.stringify({
+            timestamp: Date.now(),
+            data
+        }));
+    }
+   
+    return data;
+};
+
+export const getPlaylistItems = async (playlistId: string): Promise<Song[]> => {
+    return fetchWithCache(`playlist_${playlistId}`, async () => {
+        const apiKey = YOUTUBE_API_KEY?.trim();
+        if (!apiKey || apiKey.length < 10) return MOCK_SONGS;
+        
+        try {
+            console.log(`🎼 Fetching playlist: ${playlistId}`);
+            // Fetch playlist items
+            const url = `${BASE_URL}/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=25&key=${apiKey}`;
+            const res = await fetch(url);
+            
+            if (!res.ok) {
+                console.error(`❌ Playlist API error (${res.status})`);
+                return MOCK_SONGS;
+            }
+
+            const data = await res.json();
+            
+            // Map items to Song
+            const songs: Song[] = data.items.map((item: any) => {
+                const snippet = item.snippet;
+                const videoId = snippet.resourceId.videoId;
+                const thumbnail = snippet.thumbnails?.high?.url || snippet.thumbnails?.medium?.url;
+                
+                return {
+                    id: item.id, // PlaylistItem ID
+                    youtubeId: videoId,
+                    title: snippet.title,
+                    artist: snippet.videoOwnerChannelTitle || snippet.channelTitle,
+                    album: "Billboard Hot 100",
+                    coverUrl: thumbnail,
+                    duration: "3:00" // PlaylistItems lists don't return duration directly without extra call, defaulting for efficiency
+                };
+            }).filter((s: Song) => s.title !== "Private video" && s.title !== "Deleted video");
+
+            return songs;
+
+        } catch (error) {
+            console.error("💥 Playlist Error:", error);
+            return MOCK_SONGS;
+        }
+    });
+};
+
 export const searchYouTube = async (query: string): Promise<Song[]> => {
+    // We do NOT cache search results by default as they are dynamic user actions
+    // But we can optionally cache "static" searches like "Taylor Swift top hit" if we used a consistent key
+    // For now, leaving as is.
     const apiKey = YOUTUBE_API_KEY?.trim();
     if (!apiKey || apiKey.length < 10) {
         console.error('❌ YouTube API key is not configured properly');
@@ -163,59 +243,61 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 };
 
 export const getTrendingVideos = async (): Promise<Song[]> => {
-    const apiKey = YOUTUBE_API_KEY?.trim();
-    if (!apiKey || apiKey.length < 10) {
-        console.error('❌ YouTube API key is not configured properly');
-        return MOCK_SONGS;
-    }
-
-    try {
-        console.log('🔥 Fetching trending music videos...');
-
-        // Fetch MORE results to have a better pool after strict filtering
-        const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${apiKey}`;
-        const res = await fetch(url);
-
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            console.error(`❌ Trending API error (${res.status}):`, errorData);
-
-            if (res.status === 403 || res.status === 429) {
-                console.warn('⚠️ YouTube API quota exceeded for trending videos');
-            }
+    return fetchWithCache('trending_videos', async () => {
+        const apiKey = YOUTUBE_API_KEY?.trim();
+        if (!apiKey || apiKey.length < 10) {
+            console.error('❌ YouTube API key is not configured properly');
             return MOCK_SONGS;
         }
 
-        const data = await res.json();
+        try {
+            console.log('🔥 Fetching trending music videos...');
 
-        // STRICT FILTERING - Same as search
-        const embeddableItems = data.items.filter((item: any) => {
-            const status = item.status;
-            const snippet = item.snippet;
+            // Fetch MORE results to have a better pool after strict filtering
+            const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${apiKey}`;
+            const res = await fetch(url);
 
-            // RELAXED FILTERING - Same as search
-            const isPublic = status?.privacyStatus === 'public';
-            const notMadeForKids = !status?.madeForKids;
-            const uploadStatus = status?.uploadStatus === 'processed';
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                console.error(`❌ Trending API error (${res.status}):`, errorData);
 
-            const isValid = isPublic &&
-                notMadeForKids &&
-                uploadStatus;
-
-            if (!isValid) {
-                console.log(`⏭️ Skipping trending: ${snippet?.title} (public: ${isPublic}, kids: ${!notMadeForKids}, processed: ${uploadStatus})`);
+                if (res.status === 403 || res.status === 429) {
+                    console.warn('⚠️ YouTube API quota exceeded for trending videos');
+                }
+                return MOCK_SONGS;
             }
 
-            return isValid;
-        });
+            const data = await res.json();
 
-        console.log(`✅ Found ${embeddableItems.length} fully playable trending videos out of ${data.items.length}`);
+            // STRICT FILTERING - Same as search
+            const embeddableItems = data.items.filter((item: any) => {
+                const status = item.status;
+                const snippet = item.snippet;
 
-        // Return top 20 valid videos
-        const results = embeddableItems.slice(0, 20).map(mapYouTubeItemToSong);
-        return results.length > 0 ? results : MOCK_SONGS;
-    } catch (error) {
-        console.error("💥 YouTube Trending Error:", error);
-        return MOCK_SONGS;
-    }
+                // RELAXED FILTERING - Same as search
+                const isPublic = status?.privacyStatus === 'public';
+                const notMadeForKids = !status?.madeForKids;
+                const uploadStatus = status?.uploadStatus === 'processed';
+
+                const isValid = isPublic &&
+                    notMadeForKids &&
+                    uploadStatus;
+
+                if (!isValid) {
+                    console.log(`⏭️ Skipping trending: ${snippet?.title} (public: ${isPublic}, kids: ${!notMadeForKids}, processed: ${uploadStatus})`);
+                }
+
+                return isValid;
+            });
+
+            console.log(`✅ Found ${embeddableItems.length} fully playable trending videos out of ${data.items.length}`);
+
+            // Return top 20 valid videos
+            const results = embeddableItems.slice(0, 20).map(mapYouTubeItemToSong);
+            return results.length > 0 ? results : MOCK_SONGS;
+        } catch (error) {
+            console.error("💥 YouTube Trending Error:", error);
+            return MOCK_SONGS;
+        }
+    });
 };

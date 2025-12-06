@@ -204,9 +204,9 @@ export const FullPlayer: React.FC = () => {
                     className={`
                         absolute md:relative inset-0 md:inset-auto
                         flex flex-col
-                        transition-all duration-500
+                        transition-all duration-500 rounded-3xl
                         ${isSideViewVisible
-                            ? 'opacity-100 z-20 translate-y-0 md:w-1/2 md:h-[60vh]'
+                            ? 'opacity-100 z-20 translate-y-0 md:w-1/2 md:h-[60vh] bg-black/80 backdrop-blur-xl md:bg-transparent md:backdrop-blur-none p-6 md:p-0'
                             : 'opacity-0 pointer-events-none translate-y-10 md:w-0 md:hidden'
                         }
                     `}

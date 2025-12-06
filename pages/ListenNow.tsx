@@ -2,16 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { Play, Shuffle, Mic2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
-import { getTrendingVideos, searchYouTube } from '../services/youtubeService';
+import { getTrendingVideos, searchYouTube, getPlaylistItems } from '../services/youtubeService';
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
 
-const TOP_ARTISTS_NAMES = [
-    'Taylor Swift', 'The Weeknd', 'Drake', 'Bad Bunny', 'Harry Styles', 
-    'SZA', 'Eminem', 'Morgan Wallen', 'Justin Bieber', 'Ariana Grande',
-    'Billie Eilish', 'Travis Scott', 'Post Malone', 'Kanye West', 'Kendrick Lamar',
-    'Rihanna', 'Ed Sheeran', 'Adele', 'Beyoncé', 'Bruno Mars'
-];
+const BILLBOARD_PLAYLIST_ID = 'PL55713C70DAAD3781'; // Billboard Hot 100 Playlist
 
 interface ArtistCardProps {
     song: Song;
@@ -40,23 +35,16 @@ export const ListenNow: React.FC = () => {
     const [trending, setTrending] = useState<Song[]>([]);
     
     useEffect(() => {
-        // Load Trending for secondary sections
+        // Load Trending (Cached automatically by service)
         getTrendingVideos().then(setTrending);
 
-        // Load Top Artists (simulated by fetching their top song)
-        const loadArtists = async () => {
-            const artistPromises = TOP_ARTISTS_NAMES.slice(0, 10).map(name => searchYouTube(`${name} top hit song limit 1`));
-            const results = await Promise.all(artistPromises);
-            const artistSongs = results.map((res, index) => {
-                if (res[0]) {
-                    return { ...res[0], artist: TOP_ARTISTS_NAMES[index] }; 
-                }
-                return null;
-            }).filter(s => s !== null) as Song[];
-            
-            setTopArtistsData(artistSongs);
+        // Load Billboard Top 100 (Cached automatically by service)
+        // This replaces the 20x search calls with 1x playlist call
+        const loadBillboard = async () => {
+            const data = await getPlaylistItems(BILLBOARD_PLAYLIST_ID);
+            setTopArtistsData(data);
         };
-        loadArtists();
+        loadBillboard();
     }, []);
 
     const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'long', day: 'numeric' };
@@ -71,7 +59,8 @@ export const ListenNow: React.FC = () => {
 
     const handleShufflePlay = async () => {
         try {
-            const songs = await searchYouTube("Billboard Hot 100 Top 20");
+            // Use cached playlist items for shuffle
+            const songs = await getPlaylistItems(BILLBOARD_PLAYLIST_ID);
             if (songs.length > 0) {
                 const shuffled = [...songs].sort(() => 0.5 - Math.random());
                 playSong(shuffled[0], shuffled.slice(1));
