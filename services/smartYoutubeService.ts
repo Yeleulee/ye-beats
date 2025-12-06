@@ -1,7 +1,7 @@
 import { Song } from '../types';
 
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
-const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || '';
+import { fetchYouTubeWithRotation } from './apiKeyManager';
 
 // Helper to parse ISO 8601 duration
 const parseDuration = (duration: string): string => {
@@ -85,8 +85,9 @@ export const smartSearchYouTube = async (songTitle: string, artist: string): Pro
         if (allValidSongs.length >= 3) break; // Stop when we have enough options
 
         try {
-            const searchUrl = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=10&videoEmbeddable=true&key=${YOUTUBE_API_KEY}`;
-            const searchRes = await fetch(searchUrl);
+            const searchRes = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=10&videoEmbeddable=true&key=${key}`
+            );
 
             if (!searchRes.ok) continue;
 
@@ -96,8 +97,9 @@ export const smartSearchYouTube = async (songTitle: string, artist: string): Pro
             const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
 
             // Fetch full details with status check
-            const detailsUrl = `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${YOUTUBE_API_KEY}`;
-            const detailsRes = await fetch(detailsUrl);
+            const detailsRes = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
+            );
             const detailsData = await detailsRes.json();
 
             // Strictly filter for embeddable videos
@@ -124,8 +126,9 @@ export const smartSearchYouTube = async (songTitle: string, artist: string): Pro
 export const getEmbeddableTrending = async (): Promise<Song[]> => {
     try {
         // Fetch more results to compensate for filtering
-        const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${YOUTUBE_API_KEY}`;
-        const res = await fetch(url);
+        const res = await fetchYouTubeWithRotation(key => 
+            `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${key}`
+        );
         if (!res.ok) throw new Error("YouTube Trending Failed");
 
         const data = await res.json();

@@ -1,6 +1,7 @@
 
 import { Song } from '../types';
-import { YOUTUBE_API_KEY, MOCK_SONGS } from '../constants';
+import { MOCK_SONGS } from '../constants';
+import { fetchYouTubeWithRotation } from './apiKeyManager';
 
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
@@ -78,14 +79,12 @@ const fetchWithCache = async <T>(key: string, fetchFn: () => Promise<T>, ttlHour
 
 export const getPlaylistItems = async (playlistId: string): Promise<Song[]> => {
     return fetchWithCache(`playlist_${playlistId}`, async () => {
-        const apiKey = YOUTUBE_API_KEY?.trim();
-        if (!apiKey || apiKey.length < 10) return MOCK_SONGS;
-        
         try {
             console.log(`🎼 Fetching playlist: ${playlistId}`);
-            // Fetch playlist items
-            const url = `${BASE_URL}/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=25&key=${apiKey}`;
-            const res = await fetch(url);
+            // Fetch playlist items with rotation
+            const res = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=25&key=${key}`
+            );
             
             if (!res.ok) {
                 console.error(`❌ Playlist API error (${res.status})`);
@@ -124,11 +123,9 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
     // We do NOT cache search results by default as they are dynamic user actions
     // But we can optionally cache "static" searches like "Taylor Swift top hit" if we used a consistent key
     // For now, leaving as is.
-    const apiKey = YOUTUBE_API_KEY?.trim();
-    if (!apiKey || apiKey.length < 10) {
-        console.error('❌ YouTube API key is not configured properly');
-        return MOCK_SONGS;
-    }
+    // We do NOT cache search results by default as they are dynamic user actions
+    // But we can optionally cache "static" searches like "Taylor Swift top hit" if we used a consistent key
+    // For now, leaving as is.
 
     try {
         console.log(`🔍 Searching YouTube for: "${query}"`);
@@ -149,17 +146,21 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 
             // RELAXED SEARCH: Removed videoCategoryId=10 to find music that might be categorized differently
             // Removed videoSyndicated=true to allow all playable videos
-            const searchUrl = `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=25&safeSearch=none&key=${apiKey}`;
-
-            console.log(`📡 Fetching search results for: "${searchTerm}"`);
-            const searchRes = await fetch(searchUrl);
+            // RELAXED SEARCH: Removed videoCategoryId=10 to find music that might be categorized differently
+            // Removed videoSyndicated=true to allow all playable videos
+            const searchRes = await fetchYouTubeWithRotation(key =>
+                `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=25&safeSearch=none&key=${key}`
+            );
 
             if (!searchRes.ok) {
                 const errorData = await searchRes.json().catch(() => ({}));
                 console.error(`❌ Search API error (${searchRes.status}):`, errorData);
 
                 // If quota exceeded, stop trying and return what we have or mock data
+                // If quota exceeded, stop trying and return what we have or mock data
                 if (searchRes.status === 403 || searchRes.status === 429) {
+                    // This block might not be reached if fetchYouTubeWithRotation handles it, 
+                    // but if it returned the last failed response:
                     console.warn('⚠️ YouTube API quota exceeded, using fallback data');
                     return allResults.length > 0 ? allResults : MOCK_SONGS;
                 }
@@ -181,10 +182,11 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
             if (!videoIds) continue;
 
             // 2. Fetch details with STRICT embeddable filtering
-            const detailsUrl = `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${apiKey}`;
             console.log(`📹 Fetching video details for ${videoIds.split(',').length} videos`);
 
-            const detailsRes = await fetch(detailsUrl);
+            const detailsRes = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
+            );
 
             if (!detailsRes.ok) {
                 const errorData = await detailsRes.json().catch(() => ({}));
@@ -245,18 +247,13 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 
 export const getTrendingVideos = async (): Promise<Song[]> => {
     return fetchWithCache('trending_videos', async () => {
-        const apiKey = YOUTUBE_API_KEY?.trim();
-        if (!apiKey || apiKey.length < 10) {
-            console.error('❌ YouTube API key is not configured properly');
-            return []; // No mock data
-        }
-
         try {
             console.log('🔥 Fetching trending music videos...');
 
             // Fetch MORE results to have a better pool after strict filtering
-            const url = `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${apiKey}`;
-            const res = await fetch(url);
+            const res = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${key}`
+            );
 
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));

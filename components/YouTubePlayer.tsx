@@ -327,7 +327,7 @@ export const YouTubePlayer: React.FC = () => {
     return (
         <div
             ref={containerRef}
-            className="w-full h-full bg-black rounded-2xl overflow-hidden"
+            className="w-full h-full"
         >
             <div id="youtube-player-mount" className="w-full h-full"></div>
         </div>
