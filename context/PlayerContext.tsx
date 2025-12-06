@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+
 import { PlayerState, Song } from '../types';
+import { searchYouTube } from '../services/youtubeService';
 
 interface PlayerContextType extends PlayerState {
   playSong: (song: Song, newQueue?: Song[]) => void;
@@ -58,20 +60,35 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     }));
   };
 
-  const playNext = () => {
-    setState(prev => {
-      if (prev.queue.length === 0) return prev;
-      const nextSong = prev.queue[0];
-      const newQueue = prev.queue.slice(1);
-      return {
-        ...prev,
-        currentSong: nextSong,
-        queue: newQueue,
-        progress: 0,
-        seekRequest: 0,
-        isPlaying: true,
-      };
-    });
+
+  const playNext = async () => {
+    if (state.queue.length > 0) {
+      setState(prev => {
+        const nextSong = prev.queue[0];
+        const newQueue = prev.queue.slice(1);
+        return {
+          ...prev,
+          currentSong: nextSong,
+          queue: newQueue,
+          progress: 0,
+          seekRequest: 0,
+          isPlaying: true,
+        };
+      });
+    } else {
+      // Auto-play / Shuffle Billboard Logic
+      try {
+        console.log("Queue empty, fetching Billboard Top 10...");
+        const songs = await searchYouTube("Billboard Hot 100 Top 10");
+        if (songs.length > 0) {
+          // Shuffle the songs
+          const shuffled = [...songs].sort(() => 0.5 - Math.random());
+          playSong(shuffled[0], shuffled.slice(1));
+        }
+      } catch (error) {
+        console.error("Failed to fetch autoplay songs", error);
+      }
+    }
   };
 
   const playPrevious = () => {
