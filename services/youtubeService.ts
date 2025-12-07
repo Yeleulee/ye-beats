@@ -120,123 +120,104 @@ export const getPlaylistItems = async (playlistId: string): Promise<Song[]> => {
 };
 
 export const searchYouTube = async (query: string): Promise<Song[]> => {
-    // We do NOT cache search results by default as they are dynamic user actions
-    // But we can optionally cache "static" searches like "Taylor Swift top hit" if we used a consistent key
-    // For now, leaving as is.
+    // ENABLED Caching to save quota
+    const cacheKey = `search_v2_${encodeURIComponent(query.toLowerCase().trim())}`;
 
-    try {
-        console.log(`🔍 Searching YouTube for: "${query}"`);
+    return fetchWithCache(cacheKey, async () => {
+        try {
+            console.log(`🔍 Searching YouTube for: "${query}"`);
 
-        // STRATEGY: Try direct query first for best relevance, then music-specific
-        const searchTerms = [
-            query,
-            `${query} official audio`,
-            `${query} lyrics`,
-        ];
+            // STRATEGY: Reduce variations to save quota.
+            const searchTerms = [
+                query,
+                `${query} official audio`,
+            ];
 
-        let allResults: Song[] = [];
-        const processedVideoIds = new Set<string>();
+            let allResults: Song[] = [];
+            const processedVideoIds = new Set<string>();
 
-        // Try each search term until we get enough results
-        for (const searchTerm of searchTerms) {
-            if (allResults.length >= 15) break;
+            // Try each search term until we get enough results
+            for (const searchTerm of searchTerms) {
+                if (allResults.length >= 10) break; // Reduced target from 15 to 10
 
-            // RELAXED SEARCH: Removed videoCategoryId=10 to find music that might be categorized differently
-            // Removed videoSyndicated=true to allow all playable videos
-            const searchRes = await fetchYouTubeWithRotation(key =>
-                `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=25&safeSearch=none&key=${key}`
-            );
+                // RELAXED SEARCH
+                const searchRes = await fetchYouTubeWithRotation(key =>
+                    `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=15&safeSearch=none&key=${key}`
+                    // Reduced maxResults to 15
+                );
 
-            if (!searchRes.ok) {
-                const errorData = await searchRes.json().catch(() => ({}));
-                console.error(`❌ Search API error (${searchRes.status}):`, errorData);
+                if (!searchRes.ok) {
+                    const errorData = await searchRes.json().catch(() => ({}));
+                    console.error(`❌ Search API error (${searchRes.status}):`, errorData);
 
-                // If quota exceeded, stop trying and return what we have or mock data
-                if (searchRes.status === 403 || searchRes.status === 429) {
-                    // This block might not be reached if fetchYouTubeWithRotation handles it, 
-                    // but if it returned the last failed response:
-                    console.warn('⚠️ YouTube API quota exceeded, using fallback data');
-                    return allResults.length > 0 ? allResults : MOCK_SONGS;
-                }
-                continue;
-            }
-
-            const searchData = await searchRes.json();
-
-            if (!searchData.items || searchData.items.length === 0) {
-                console.log(`ℹ️ No results for "${searchTerm}"`);
-                continue;
-            }
-
-            const videoIds = searchData.items
-                .map((item: any) => item.id.videoId)
-                .filter((id: string) => !processedVideoIds.has(id))
-                .join(',');
-
-            if (!videoIds) continue;
-
-            // 2. Fetch details with STRICT embeddable filtering
-            console.log(`📹 Fetching video details for ${videoIds.split(',').length} videos`);
-
-            const detailsRes = await fetchYouTubeWithRotation(key => 
-                `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
-            );
-
-            if (!detailsRes.ok) {
-                const errorData = await detailsRes.json().catch(() => ({}));
-                console.error(`❌ Details API error (${detailsRes.status}):`, errorData);
-                continue;
-            }
-
-            const detailsData = await detailsRes.json();
-
-            // RELAXED FILTERING: Let more videos through since we have bypass techniques
-            // Only filter out videos that are DEFINITELY broken:
-            // 1. Not processed yet
-            // 2. Private/unlisted
-            // 3. Made for kids (these have strict autoplay restrictions)
-            const validItems = detailsData.items.filter((item: any) => {
-                const status = item.status;
-                const snippet = item.snippet;
-
-                // Only check critical filters - let embeddable check be lenient
-                const isPublic = status?.privacyStatus === 'public';
-                const notMadeForKids = !status?.madeForKids;
-                const uploadStatus = status?.uploadStatus === 'processed';
-
-                // We're REMOVING the embeddable check because:
-                // 1. YouTube's API sometimes reports videos as non-embeddable when they actually work
-                // 2. Our nocookie domain + direct iframe fallback can play many restricted videos
-                // 3. Better to try and fail gracefully than pre-filter too aggressively
-
-                const isValid = isPublic &&
-                    notMadeForKids &&
-                    uploadStatus;
-
-                if (!isValid) {
-                    console.log(`⏭️ Skipping: ${snippet?.title} (public: ${isPublic}, kids: ${!notMadeForKids}, processed: ${uploadStatus})`);
+                    if (searchRes.status === 403 || searchRes.status === 429) {
+                        console.warn('⚠️ YouTube API quota exceeded, using fallback data');
+                        return allResults.length > 0 ? allResults : MOCK_SONGS;
+                    }
+                    continue;
                 }
 
-                return isValid;
-            });
+                const searchData = await searchRes.json();
 
-            console.log(`✅ Found ${validItems.length} fully playable videos out of ${detailsData.items.length}`);
-
-            validItems.forEach((item: any) => {
-                if (!processedVideoIds.has(item.id)) {
-                    processedVideoIds.add(item.id);
-                    allResults.push(mapYouTubeItemToSong(item));
+                if (!searchData.items || searchData.items.length === 0) {
+                    console.log(`ℹ️ No results for "${searchTerm}"`);
+                    continue;
                 }
-            });
-        }
+
+                const videoIds = searchData.items
+                    .map((item: any) => item.id.videoId)
+                    .filter((id: string) => !processedVideoIds.has(id))
+                    .join(',');
+
+                if (!videoIds) continue;
+
+                // 2. Fetch details 
+                console.log(`📹 Fetching video details for ${videoIds.split(',').length} videos`);
+
+                const detailsRes = await fetchYouTubeWithRotation(key => 
+                    `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
+                );
+
+                if (!detailsRes.ok) {
+                    continue;
+                }
+
+                const detailsData = await detailsRes.json();
+
+                // RELAXED FILTERING
+                const validItems = detailsData.items.filter((item: any) => {
+                    const status = item.status;
+                    const snippet = item.snippet;
+
+                    const isPublic = status?.privacyStatus === 'public';
+                    const notMadeForKids = !status?.madeForKids;
+                    const uploadStatus = status?.uploadStatus === 'processed';
+
+                    const isValid = isPublic &&
+                        notMadeForKids &&
+                        uploadStatus;
+
+                    return isValid;
+                });
+
+                console.log(`✅ Found ${validItems.length} fully playable videos`);
+
+                validItems.forEach((item: any) => {
+                    if (!processedVideoIds.has(item.id)) {
+                        processedVideoIds.add(item.id);
+                        allResults.push(mapYouTubeItemToSong(item));
+                    }
+                });
+            }
 
             console.log(`🎵 Total results found: ${allResults.length}`);
-        return allResults.length > 0 ? allResults.slice(0, 20) : [];
+            return allResults.length > 0 ? allResults.slice(0, 20) : [];
 
-    } catch (error) {
-        console.error("💥 YouTube API Error:", error);
-        return []; 
-    }
+        } catch (error) {
+            console.error("💥 YouTube API Error:", error);
+            return []; 
+        }
+    }, 6); // Cache for 6 hours
 };
 
 export const getTrendingVideos = async (): Promise<Song[]> => {

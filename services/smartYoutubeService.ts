@@ -1,7 +1,8 @@
 import { Song } from '../types';
+import { fetchYouTubeWithRotation } from './apiKeyManager';
+import { MOCK_SONGS } from '../constants'; // Fallback if completely failed
 
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
-import { fetchYouTubeWithRotation } from './apiKeyManager';
 
 // Helper to parse ISO 8601 duration
 const parseDuration = (duration: string): string => {
@@ -54,7 +55,7 @@ const isVideoEmbeddable = (item: any): boolean => {
     if (status?.publicStatsViewable === false) return false;
     if (status?.privacyStatus !== 'public') return false;
 
-    // No age restrictions
+    // No age restrictions (mild check)
     if (contentDetails?.contentRating?.ytRating) return false;
 
     // Not a livestream
@@ -66,95 +67,131 @@ const isVideoEmbeddable = (item: any): boolean => {
     return true;
 };
 
+// Simple Caching Helper (24h TTL)
+const fetchWithCache = async <T>(key: string, fetchFn: () => Promise<T>): Promise<T> => {
+    const CACHE_PREFIX = 'smart_cache_';
+    const cached = localStorage.getItem(CACHE_PREFIX + key);
+    
+    if (cached) {
+        try {
+            const entry = JSON.parse(cached);
+            if (Date.now() - entry.timestamp < 24 * 60 * 60 * 1000) {
+                 console.log(`📦 Serving "${key}" from cache`);
+                 return entry.data;
+            }
+        } catch (e) {}
+    }
+
+    const data = await fetchFn();
+    
+    if (Array.isArray(data) && data.length > 0) {
+        try {
+            localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({
+                timestamp: Date.now(),
+                data
+            }));
+        } catch (e) {
+            // Storage full? Ignore.
+        }
+    }
+    return data;
+};
+
 /**
  * Smart search that tries multiple query variations to find embeddable videos
  */
 export const smartSearchYouTube = async (songTitle: string, artist: string): Promise<Song[]> => {
-    // Strategy: Try multiple search variations in order of preference
-    const searchVariations = [
-        `${songTitle} ${artist} lyrics`,           // Lyric videos - MOST likely to be embeddable
-        `${songTitle} ${artist} official audio`,   // Official audio - Also very embeddable
-        `${songTitle} ${artist} audio`,            // Generic audio
-        `${songTitle} ${artist} lyric video`,      // Explicit lyric video search
-        `${songTitle} ${artist}`,                  // Fallback to basic search
-    ];
+    const cacheKey = `search_${encodeURIComponent(`${songTitle}_${artist}`)}`;
+    
+    return fetchWithCache(cacheKey, async () => {
+        // Reduced variations to save quota
+        const searchVariations = [
+            `${songTitle} ${artist} lyrics`,           // Best for finding official/lyric vids
+            `${songTitle} ${artist} official audio`,   // Good alternative
+             // Removed others to save 300+ units per search
+        ];
 
-    let allValidSongs: Song[] = [];
+        let allValidSongs: Song[] = [];
 
-    for (const query of searchVariations) {
-        if (allValidSongs.length >= 3) break; // Stop when we have enough options
+        for (const query of searchVariations) {
+            try {
+                // Optimization: Don't request too many results if we just need a few working ones
+                const searchRes = await fetchYouTubeWithRotation(key => 
+                    `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=5&videoEmbeddable=true&key=${key}`
+                );
 
-        try {
-            const searchRes = await fetchYouTubeWithRotation(key => 
-                `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=10&videoEmbeddable=true&key=${key}`
-            );
+                if (!searchRes.ok) continue;
 
-            if (!searchRes.ok) continue;
+                const searchData = await searchRes.json();
+                if (!searchData.items || searchData.items.length === 0) continue;
 
-            const searchData = await searchRes.json();
-            if (!searchData.items || searchData.items.length === 0) continue;
+                const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
 
-            const videoIds = searchData.items.map((item: any) => item.id.videoId).join(',');
+                // Fetch full details with status check (Cost: 1 unit)
+                const detailsRes = await fetchYouTubeWithRotation(key => 
+                    `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
+                );
+                
+                if (!detailsRes.ok) continue;
 
-            // Fetch full details with status check
-            const detailsRes = await fetchYouTubeWithRotation(key => 
-                `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
-            );
-            const detailsData = await detailsRes.json();
+                const detailsData = await detailsRes.json();
+                const validItems = detailsData.items.filter(isVideoEmbeddable);
 
-            // Strictly filter for embeddable videos
-            const validItems = detailsData.items.filter(isVideoEmbeddable);
+                allValidSongs = [...allValidSongs, ...validItems.map(mapYouTubeItemToSong)];
 
-            allValidSongs = [...allValidSongs, ...validItems.map(mapYouTubeItemToSong)];
-        } catch (error) {
-            console.error(`Search failed for "${query}":`, error);
-            continue;
+                // If we found at least 2 good results, STOP searching. 
+                // We don't need to burn 100 more units for the next variation.
+                if (allValidSongs.length >= 2) break; 
+
+            } catch (error) {
+                console.error(`Search failed for "${query}":`, error);
+                continue;
+            }
         }
-    }
 
-    // Remove duplicates by video ID
-    const uniqueSongs = allValidSongs.filter((song, index, self) =>
-        index === self.findIndex((s) => s.youtubeId === song.youtubeId)
-    );
+        // De-dupe
+        const uniqueSongs = allValidSongs.filter((song, index, self) =>
+            index === self.findIndex((s) => s.youtubeId === song.youtubeId)
+        );
 
-    return uniqueSongs.slice(0, 5); // Return top 5 options
+        return uniqueSongs.slice(0, 5);
+    });
 };
 
 /**
  * Get trending embeddable videos
  */
 export const getEmbeddableTrending = async (): Promise<Song[]> => {
-    try {
-        // Fetch more results to compensate for filtering
-        const res = await fetchYouTubeWithRotation(key => 
-            `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=50&regionCode=US&key=${key}`
-        );
-        if (!res.ok) throw new Error("YouTube Trending Failed");
+    return fetchWithCache('trending_smart', async () => {
+        try {
+            const res = await fetchYouTubeWithRotation(key => 
+                `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=40&regionCode=US&key=${key}`
+            );
+            if (!res.ok) throw new Error("YouTube Trending Failed");
 
-        const data = await res.json();
+            const data = await res.json();
+            const embeddableItems = data.items.filter(isVideoEmbeddable);
 
-        // Strictly filter for embeddable videos
-        const embeddableItems = data.items.filter(isVideoEmbeddable);
-
-        return embeddableItems.slice(0, 15).map(mapYouTubeItemToSong);
-    } catch (error) {
-        console.error("YouTube Trending Error:", error);
-        return [];
-    }
+            return embeddableItems.slice(0, 20).map(mapYouTubeItemToSong);
+        } catch (error) {
+            console.error("YouTube Trending Error:", error);
+            return [];
+        }
+    });
 };
 
 /**
- * Search with fallback - returns at least some results
+ * Search with fallback
  */
 export const searchWithFallback = async (query: string): Promise<Song[]> => {
-    // Try smart search first
+    // 1. Try smart search (now cached)
     const smartResults = await smartSearchYouTube(query, '');
 
     if (smartResults.length > 0) {
         return smartResults;
     }
 
-    // Fallback to trending if search fails
+    // 2. Fallback to trending (cached)
     console.warn('Smart search returned no results, falling back to trending');
     return getEmbeddableTrending();
 };
