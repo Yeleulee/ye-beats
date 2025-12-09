@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Mic2, Guitar, Headphones, Wind, Coffee, Speaker, Radio as RadioIcon, Signal } from 'lucide-react';
+import { Play, Mic2, Guitar, Headphones, Wind, Coffee, Speaker, Radio as RadioIcon, Signal, TrendingUp } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
-import { searchYouTube } from '../services/youtubeService';
+import { searchYouTube, getTrendingVideos } from '../services/youtubeService';
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
 
@@ -18,11 +18,25 @@ export const Explore: React.FC = () => {
     const { playSong, setLyricsVisible, addToQueue } = usePlayer();
     const [activeStation, setActiveStation] = useState<string | null>(null);
     const [stationSongs, setStationSongs] = useState<Song[]>([]);
+    const [recommendedSongs, setRecommendedSongs] = useState<Song[]>([]);
     const [loading, setLoading] = useState(false);
+    const [loadingRecommended, setLoadingRecommended] = useState(true);
 
-    // Initial load - verify we can load at least one station
+    // Load recommended songs on mount
     useEffect(() => {
-        // Optional: Pre-fetch or just wait for interaction
+        const loadRecommendedSongs = async () => {
+            try {
+                console.log('📻 Loading recommended songs for Radio...');
+                const trending = await getTrendingVideos();
+                setRecommendedSongs(trending.slice(0, 12)); // Show 12 recommended songs
+            } catch (error) {
+                console.error('Failed to load recommended songs:', error);
+            } finally {
+                setLoadingRecommended(false);
+            }
+        };
+        
+        loadRecommendedSongs();
     }, []);
 
     const playRandomStation = () => {
@@ -153,6 +167,53 @@ export const Explore: React.FC = () => {
                             </div>
                         </div>
                     ))}
+                </div>
+
+                {/* Recommended for You Section */}
+                <div className="mt-12">
+                    <div className="flex items-center gap-3 mb-6">
+                        <TrendingUp className="text-[#FA2D48]" size={28} />
+                        <h3 className="text-2xl font-bold text-white">Recommended for You</h3>
+                    </div>
+                    
+                    {loadingRecommended ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                            {[...Array(12)].map((_, i) => (
+                                <div key={i} className="animate-pulse">
+                                    <div className="aspect-square bg-white/5 rounded-lg mb-3" />
+                                    <div className="h-4 bg-white/5 rounded w-3/4 mb-2" />
+                                    <div className="h-3 bg-white/5 rounded w-1/2" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : recommendedSongs.length > 0 ? (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                            {recommendedSongs.map((song) => (
+                                <SongCard
+                                    key={song.id}
+                                    song={song}
+                                    onClick={() => playSong(song)}
+                                    onPlay={(e) => {
+                                        e.stopPropagation();
+                                        playSong(song);
+                                    }}
+                                    onViewLyrics={(e) => {
+                                        e.stopPropagation();
+                                        playSong(song);
+                                        setLyricsVisible(true);
+                                    }}
+                                    onAddToQueue={(e) => {
+                                        e.stopPropagation();
+                                        addToQueue(song);
+                                    }}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 text-gray-400">
+                            <p>No recommendations available at the moment.</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Recent Tracks Section (if active) */}
