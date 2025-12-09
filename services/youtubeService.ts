@@ -127,9 +127,8 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
         try {
             console.log(`🔍 Searching YouTube for: "${query}"`);
 
-            // STRATEGY: Reduce variations to save quota.
+            // STRATEGY: Single optimized search to minimize quota usage
             const searchTerms = [
-                query,
                 `${query} official audio`,
             ];
 
@@ -138,12 +137,11 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 
             // Try each search term until we get enough results
             for (const searchTerm of searchTerms) {
-                if (allResults.length >= 10) break; // Reduced target from 15 to 10
+                if (allResults.length >= 8) break; // Reduced target to minimize quota usage
 
-                // RELAXED SEARCH
+                // OPTIMIZED SEARCH - Reduced maxResults to save quota
                 const searchRes = await fetchYouTubeWithRotation(key =>
-                    `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=15&safeSearch=none&key=${key}`
-                    // Reduced maxResults to 15
+                    `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(searchTerm)}&type=video&maxResults=10&safeSearch=none&key=${key}`
                 );
 
                 if (!searchRes.ok) {

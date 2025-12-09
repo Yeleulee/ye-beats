@@ -104,20 +104,18 @@ export const smartSearchYouTube = async (songTitle: string, artist: string): Pro
     const cacheKey = `search_${encodeURIComponent(`${songTitle}_${artist}`)}`;
     
     return fetchWithCache(cacheKey, async () => {
-        // Reduced variations to save quota
+        // Single most effective variation to minimize quota
         const searchVariations = [
             `${songTitle} ${artist} lyrics`,           // Best for finding official/lyric vids
-            `${songTitle} ${artist} official audio`,   // Good alternative
-             // Removed others to save 300+ units per search
         ];
 
         let allValidSongs: Song[] = [];
 
         for (const query of searchVariations) {
             try {
-                // Optimization: Don't request too many results if we just need a few working ones
+                // Optimization: Minimal results to save quota (3 instead of 5)
                 const searchRes = await fetchYouTubeWithRotation(key => 
-                    `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=5&videoEmbeddable=true&key=${key}`
+                    `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(query)}&type=video&videoCategoryId=10&maxResults=3&videoEmbeddable=true&key=${key}`
                 );
 
                 if (!searchRes.ok) continue;

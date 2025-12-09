@@ -62,7 +62,16 @@ export const fetchYouTubeWithRotation = async (
     
     // We already returned if success.
     // If we are here, it means we failed all attempts.
-    // We should probably return a mock 429 response or just throw.
+    // Return a mock 429 response so callers can handle gracefully
+    console.error('❌ All API keys exhausted');
     
-    throw new Error('All API keys exhausted or quota exceeded.');
+    return new Response(JSON.stringify({
+        error: {
+            code: 429,
+            message: 'All API keys exhausted or quota exceeded.'
+        }
+    }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json' }
+    });
 };
