@@ -383,9 +383,13 @@ export const YouTubePlayer: React.FC = () => {
     return React.useMemo(() => (
         <div
             ref={containerRef}
-            className="w-full h-full"
+            className="w-full h-full relative"
+            style={{ aspectRatio: '16 / 9' }}
         >
-            <div id="youtube-player-mount" className="w-full h-full"></div>
+            <div 
+                id="youtube-player-mount" 
+                className="absolute inset-0 w-full h-full"
+            ></div>
         </div>
     ), []);
 };

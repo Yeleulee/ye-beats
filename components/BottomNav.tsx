@@ -19,7 +19,11 @@ export const BottomNav: React.FC<Props> = ({ currentTab, onTabChange }) => {
 
   return (
     <div
-      className="fixed bottom-0 left-0 w-full pb-6 pt-2 flex items-center justify-around border-t border-white/10 z-50 backdrop-blur-3xl bg-[#000000]/90 transition-all duration-300"
+      className="fixed bottom-0 left-0 w-full pb-safe-bottom pb-4 pt-3 flex items-center justify-around border-t border-white/10 z-[70] backdrop-blur-3xl bg-[#000000]/95 transition-all duration-300"
+      style={{ 
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
+        touchAction: 'manipulation' 
+      }}
     >
       {navItems.map((item) => {
         const isActive = currentTab === item.id;
@@ -28,7 +32,8 @@ export const BottomNav: React.FC<Props> = ({ currentTab, onTabChange }) => {
           <button
             key={item.id}
             onClick={() => onTabChange(item.id)}
-            className="flex flex-col items-center justify-center w-full h-[50px] space-y-1 active:scale-95 transition-transform"
+            className="flex flex-col items-center justify-center min-w-[60px] min-h-[56px] space-y-1 active:scale-95 transition-transform touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <Icon
               size={24}

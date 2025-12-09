@@ -13,9 +13,13 @@ export const MiniPlayer: React.FC = () => {
 
   return (
     <div
-      className="fixed bottom-16 left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] max-w-screen-xl rounded-lg p-2 flex items-center shadow-2xl z-50 cursor-pointer overflow-hidden backdrop-blur-xl bg-[#212121]"
+      className="fixed bottom-[88px] left-1/2 -translate-x-1/2 w-[calc(100%-1rem)] max-w-screen-xl rounded-lg p-2 flex items-center shadow-2xl z-[65] cursor-pointer overflow-hidden backdrop-blur-xl bg-[#212121]"
       onClick={maximizePlayer}
-      style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}
+      style={{ 
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+        touchAction: 'manipulation',
+        WebkitTapHighlightColor: 'transparent'
+      }}
     >
       {/* Progress Bar Top */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10">
@@ -37,11 +41,12 @@ export const MiniPlayer: React.FC = () => {
       </div>
 
       <button
-        className="p-2 ml-2 text-white"
+        className="p-3 ml-2 text-white active:scale-90 transition-transform touch-manipulation"
         onClick={(e) => {
           e.stopPropagation();
           togglePlay();
         }}
+        style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         {isPlaying ? <Pause size={22} fill="white" /> : <Play size={22} fill="white" />}
       </button>

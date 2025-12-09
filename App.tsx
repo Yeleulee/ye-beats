@@ -59,8 +59,8 @@ const AppContent = () => {
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 h-screen overflow-y-auto no-scrollbar bg-[#121212] md:ml-64 relative">
-        <div className="max-w-screen-2xl mx-auto min-h-full pb-32 md:pb-28">
+      <main className="flex-1 h-screen overflow-y-auto no-scrollbar bg-[#121212] md:ml-64 relative overscroll-none">
+        <div className="max-w-screen-2xl mx-auto min-h-full pb-36 md:pb-28">
           {renderScreen()}
         </div>
       </main>

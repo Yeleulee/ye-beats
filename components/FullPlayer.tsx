@@ -196,10 +196,10 @@ export const FullPlayer: React.FC = () => {
                 <div className={`relative flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] 
                     ${isSideViewVisible ? 'md:w-1/2 md:scale-90' : 'md:w-full'} 
                     ${videoMode 
-                        ? 'aspect-video w-auto h-auto max-w-full md:max-h-[60vh] shadow-[0_0_50px_rgba(0,0,0,0.5)]' 
+                        ? 'w-full max-w-[90vw] md:max-w-[70vw] md:max-h-[60vh] shadow-[0_0_50px_rgba(0,0,0,0.5)]' 
                         : 'aspect-square w-full max-w-[340px] md:max-w-[500px]'
                     }`}
-                    style={videoMode ? { aspectRatio: '16/9' } : {}}
+                    style={videoMode ? { aspectRatio: '16 / 9' } : {}}
                 >
 
                     {/* Album Art */}
