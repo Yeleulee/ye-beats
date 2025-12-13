@@ -75,12 +75,8 @@ const AppContent = () => {
 
       {/* Mobile Interface - Hidden on Desktop */}
       <div className="md:hidden">
-        {activeTab !== Tab.SEARCH && (
-          <>
-            <MiniPlayer />
-            <BottomNav currentTab={activeTab} onTabChange={handleTabChange} />
-          </>
-        )}
+        <MiniPlayer />
+        <BottomNav currentTab={activeTab} onTabChange={handleTabChange} />
       </div>
     </div>
   );

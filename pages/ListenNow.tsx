@@ -5,6 +5,7 @@ import { usePlayer } from '../context/PlayerContext';
 import { getTrendingVideos, searchYouTube, getBillboardTopSongs } from '../services/youtubeService';
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
+import { ArtistCard } from '../components/ArtistCard';
 
 
 
@@ -63,6 +64,26 @@ export const ListenNow: React.FC = () => {
             playSong(topArtistsData[0], topArtistsData.slice(1));
         }
     };
+
+    // Billboard Artists Section with circular avatars
+    const BillboardArtistsSection = ({ title, songs }: { title: string, songs: Song[] }) => (
+        <div className="mb-10">
+            <div className="flex items-center justify-between px-5 mb-4">
+                <h2 className="text-[22px] font-bold text-white">{title}</h2>
+                <button className="text-[#FA2D48] text-sm font-medium">See All</button>
+            </div>
+            <div className="flex overflow-x-auto gap-5 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
+                {songs.map((song, i) => (
+                    <ArtistCard
+                        key={song.id || i}
+                        song={song}
+                        onClick={() => playSong(song)}
+                        onPlay={(e) => { e.stopPropagation(); playSong(song); }}
+                    />
+                ))}
+            </div>
+        </div>
+    );
 
     const Sections = ({ title, songs }: { title: string, songs: Song[] }) => (
         <div className="mb-10">
@@ -150,7 +171,7 @@ export const ListenNow: React.FC = () => {
                     </div>
                 ) : (
                     <>
-                        {topArtistsData.length > 0 && <Sections title="Billboard Hot 100" songs={topArtistsData} />}
+                        {topArtistsData.length > 0 && <BillboardArtistsSection title="Billboard Top 100" songs={topArtistsData} />}
                         {trending.length > 0 && <Sections title="Heavy Rotation" songs={[...trending].reverse()} />}
                         {trending.length > 0 && <Sections title="Top Picks" songs={trending} />}
                         
