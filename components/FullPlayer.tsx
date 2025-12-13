@@ -192,20 +192,21 @@ export const FullPlayer: React.FC = () => {
                 </button>
             </div>
 
-            {/* Main Content - Responsive Layout */}
-            <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center px-4 md:px-8 pb-2 gap-4 md:gap-12 overflow-hidden max-w-screen-2xl mx-auto w-full">
+            {/* Main Content - Optimized Layout Without Black Space */}
+            <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center px-4 md:px-8 gap-4 md:gap-8 overflow-hidden max-w-screen-2xl mx-auto w-full">
 
-                {/* Left Side: Album Art / Video */}
-                <div className={`relative flex items-center justify-center transition-all duration-500 ease-out
-                    ${isSideViewVisible ? 'md:w-1/2' : 'md:w-full'} 
+                {/* Left Side: Album Art / Video - Fills Available Space */}
+                <div className={`relative flex items-center justify-center transition-all duration-500 ease-out w-full
+                    ${isSideViewVisible ? 'md:w-1/2' : 'md:w-auto md:flex-1'} 
                     ${videoMode 
-                        ? 'w-full' 
-                        : 'aspect-square w-full max-w-[85vw] md:max-w-[450px]'
+                        ? '' 
+                        : 'max-w-[85vw] md:max-w-[500px]'
                     }`}
                 >
 
                     {/* Album Art */}
-                    <div className={`relative w-full h-full transition-all duration-700 ${videoMode ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                    <div className={`relative w-full transition-all duration-700 ${videoMode ? 'opacity-0 pointer-events-none' : 'opacity-100'} 
+                        ${!isSideViewVisible ? 'aspect-square' : 'aspect-square'}`}>
                         <img
                             src={currentSong.coverUrl}
                             alt={currentSong.title}
@@ -218,26 +219,13 @@ export const FullPlayer: React.FC = () => {
                          <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
                     </div>
 
-                    {/* YouTube Player Embed - Optimized for All Screens */}
-                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 overflow-hidden rounded-xl md:rounded-2xl shadow-2xl bg-black ${videoMode ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-[-1] pointer-events-none scale-95'}`}>
-                        {/* Video Container with Proper Aspect Ratio */}
-                        <div className="w-full h-full flex items-center justify-center p-2 md:p-4">
-                            {/* Constrained Video Wrapper - Best Practice Sizing */}
-                            <div 
-                                className="relative w-full transform transition-transform duration-300 ease-out"
-                                style={{
-                                    maxWidth: isSideViewVisible ? '100%' : 'min(1280px, 85vw)',
-                                    maxHeight: isSideViewVisible ? '100%' : 'min(720px, 70vh)',
-                                    aspectRatio: '16 / 9'
-                                }}
-                            >
-                                {/* Subtle Border for Video Frame */}
-                                <div className="absolute inset-0 border border-white/5 rounded-lg pointer-events-none z-10 shadow-xl"></div>
-                                
-                                {/* Actual YouTube Player */}
-                                <div className="w-full h-full rounded-lg overflow-hidden">
-                                    <YouTubePlayer />
-                                </div>
+                    {/* YouTube Player Embed - No Black Frames */}
+                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 rounded-xl md:rounded-2xl overflow-hidden shadow-2xl ${videoMode ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-[-1] pointer-events-none scale-95'}`}>
+                        {/* Video Container - Fills Entire Space */}
+                        <div className="w-full h-full">
+                            {/* YouTube Player - No Black Frames */}
+                            <div className="w-full h-full">
+                                <YouTubePlayer />
                             </div>
                         </div>
                     </div>
