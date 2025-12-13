@@ -300,28 +300,126 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                 ) : (
                     <div className="animate-in fade-in duration-700 slide-in-from-bottom-4">
                         
-                        {/* Coming Soon / Hero Section */}
-                        <div className="px-5 mb-10">
-                            <div className="flex items-center justify-between mb-3 text-white">
-                                <h2 className="text-[22px] font-bold">Coming Soon</h2>
-                                <ChevronRight size={20} className="text-neutral-500" />
+                        {/* Enhanced Hero Section with Gradient */}
+                        <div className="relative px-5 mb-10 overflow-hidden">
+                            {/* Animated Background Gradients */}
+                            <div className="absolute inset-0 -mx-5">
+                                <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-[#FA2D48]/20 via-purple-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+                                <div className="absolute top-1/3 right-1/4 w-72 h-72 bg-gradient-to-br from-blue-500/15 via-pink-500/10 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '1s' }}></div>
                             </div>
-                            {/* We use the trending data for the hero, but style it as specific cards */}
-                            <div className="flex overflow-x-auto gap-4 no-scrollbar snap-x scroll-pl-5 pb-4">
-                                {trending.slice(0, 4).map((song) => (
+
+                            {/* Welcome Message */}
+                            <div className="relative z-10 mb-6">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-1 h-6 bg-gradient-to-b from-[#FA2D48] to-purple-500 rounded-full"></div>
+                                    <p className="text-sm font-semibold text-gray-400 tracking-wide uppercase">
+                                        {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'}
+                                    </p>
+                                </div>
+                                <h2 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
+                                    What do you want to hear?
+                                </h2>
+                                <p className="text-gray-400 text-sm md:text-base">
+                                    Your personalized music feed waiting for you
+                                </p>
+                            </div>
+
+                            {/* Quick Play Cards - 2x2 Grid */}
+                            <div className="relative z-10 grid grid-cols-2 gap-3 md:gap-4 mb-6">
+                                {trending.slice(0, 4).map((song, index) => (
+                                    <div
+                                        key={song.id}
+                                        onClick={() => playSong(song)}
+                                        className="group relative bg-gradient-to-br from-white/5 to-white/[0.02] hover:from-white/10 hover:to-white/5 rounded-xl p-3 md:p-4 cursor-pointer border border-white/5 hover:border-white/10 transition-all duration-300 overflow-hidden backdrop-blur-sm"
+                                    >
+                                        {/* Hover Gradient */}
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#FA2D48]/0 to-purple-500/0 group-hover:from-[#FA2D48]/10 group-hover:to-purple-500/5 transition-all duration-500 rounded-xl"></div>
+                                        
+                                        <div className="relative flex items-center gap-3">
+                                            {/* Album Art */}
+                                            <div className="relative flex-none w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden shadow-lg">
+                                                <img 
+                                                    src={song.coverUrl} 
+                                                    alt={song.title}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                                                />
+                                                {/* Play Overlay */}
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all duration-300">
+                                                    <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300 shadow-xl">
+                                                        <Play size={14} fill="black" className="text-black ml-0.5" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Song Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-white font-semibold text-sm md:text-base truncate mb-0.5 group-hover:text-[#FA2D48] transition-colors">
+                                                    {song.title}
+                                                </h4>
+                                                <p className="text-gray-400 text-xs md:text-sm truncate">
+                                                    {song.artist}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Index Badge */}
+                                        <div className="absolute top-2 right-2 w-6 h-6 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center">
+                                            <span className="text-[10px] font-bold text-white/60">#{index + 1}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Featured New Releases - Enhanced Horizontal Scroll */}
+                        <div className="mb-10">
+                            <div className="px-5 mb-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white tracking-tight mb-1">New Releases</h2>
+                                        <p className="text-sm text-gray-400">Fresh tracks just for you</p>
+                                    </div>
+                                    <ChevronRight size={20} className="text-gray-500" />
+                                </div>
+                            </div>
+                            <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
+                                {trending.slice(0, 6).map((song) => (
                                     <div 
                                         key={song.id}
                                         onClick={() => playSong(song)}
-                                        className="snap-start flex-none w-[85vw] md:w-[45vw] lg:w-[30vw] flex flex-col cursor-pointer group"
+                                        className="snap-start flex-none w-[160px] md:w-[180px] group cursor-pointer"
                                     >
-                                        <div className="relative aspect-[16/10] mb-2 overflow-hidden rounded-xl bg-[#222] shadow-lg border border-white/5">
-                                            <img src={song.coverUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider text-white">
-                                                New Release
+                                        {/* Album Art with Hover Effect */}
+                                        <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-[#1a1a1a] shadow-xl border border-white/5 group-hover:border-white/10 transition-all duration-300">
+                                            <img 
+                                                src={song.coverUrl} 
+                                                alt={song.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                            />
+                                            
+                                            {/* Gradient Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                            
+                                            {/* Play Button */}
+                                            <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300">
+                                                <div className="w-10 h-10 bg-[#FA2D48] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform">
+                                                    <Play size={16} fill="white" className="text-white ml-0.5" />
+                                                </div>
+                                            </div>
+
+                                            {/* New Badge */}
+                                            <div className="absolute top-2 left-2 bg-gradient-to-r from-[#FA2D48] to-purple-500 px-2 py-1 rounded-md">
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">New</span>
                                             </div>
                                         </div>
-                                        <span className="text-white font-medium text-[15px] truncate">{song.title}</span>
-                                        <span className="text-gray-400 text-[14px] truncate">{song.artist}</span>
+
+                                        {/* Song Info */}
+                                        <h4 className="text-white font-semibold text-sm truncate mb-1 group-hover:text-[#FA2D48] transition-colors">
+                                            {song.title}
+                                        </h4>
+                                        <p className="text-gray-400 text-xs truncate">
+                                            {song.artist}
+                                        </p>
                                     </div>
                                 ))}
                             </div>
