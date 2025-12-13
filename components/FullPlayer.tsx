@@ -44,6 +44,9 @@ export const FullPlayer: React.FC = () => {
     const [scrubValue, setScrubValue] = useState(0);
     const [isHoveringScrubber, setIsHoveringScrubber] = useState(false);
 
+    // Button feedback states for instant responsiveness
+    const [buttonPressed, setButtonPressed] = useState<string | null>(null);
+
     const lyricsContainerRef = useRef<HTMLDivElement>(null);
 
     // Reset lyrics when song changes
@@ -193,10 +196,10 @@ export const FullPlayer: React.FC = () => {
             <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center px-4 md:px-8 pb-2 gap-4 md:gap-12 overflow-hidden max-w-screen-2xl mx-auto w-full">
 
                 {/* Left Side: Album Art / Video */}
-                <div className={`relative flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] 
-                    ${isSideViewVisible ? 'md:w-1/2 md:scale-90' : 'md:w-full'} 
+                <div className={`relative flex items-center justify-center transition-all duration-500 ease-out
+                    ${isSideViewVisible ? 'md:w-1/2' : 'md:w-full'} 
                     ${videoMode 
-                        ? 'w-full max-w-[95vw] md:max-w-[80vw] aspect-video shadow-[0_0_50px_rgba(0,0,0,0.5)]' 
+                        ? 'w-full' 
                         : 'aspect-square w-full max-w-[85vw] md:max-w-[450px]'
                     }`}
                 >
@@ -215,9 +218,28 @@ export const FullPlayer: React.FC = () => {
                          <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
                     </div>
 
-                    {/* YouTube Player Embed */}
-                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 overflow-hidden rounded-xl md:rounded-2xl shadow-2xl bg-black border border-white/10 ${videoMode ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-[-1] pointer-events-none scale-90'}`}>
-                        <YouTubePlayer />
+                    {/* YouTube Player Embed - Optimized for All Screens */}
+                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-300 overflow-hidden rounded-xl md:rounded-2xl shadow-2xl bg-black ${videoMode ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-[-1] pointer-events-none scale-95'}`}>
+                        {/* Video Container with Proper Aspect Ratio */}
+                        <div className="w-full h-full flex items-center justify-center p-2 md:p-4">
+                            {/* Constrained Video Wrapper - Best Practice Sizing */}
+                            <div 
+                                className="relative w-full transform transition-transform duration-300 ease-out"
+                                style={{
+                                    maxWidth: isSideViewVisible ? '100%' : 'min(1280px, 85vw)',
+                                    maxHeight: isSideViewVisible ? '100%' : 'min(720px, 70vh)',
+                                    aspectRatio: '16 / 9'
+                                }}
+                            >
+                                {/* Subtle Border for Video Frame */}
+                                <div className="absolute inset-0 border border-white/5 rounded-lg pointer-events-none z-10 shadow-xl"></div>
+                                
+                                {/* Actual YouTube Player */}
+                                <div className="w-full h-full rounded-lg overflow-hidden">
+                                    <YouTubePlayer />
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -379,39 +401,92 @@ export const FullPlayer: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Playback Controls */}
+                    {/* Playback Controls - Enhanced Responsiveness */}
                     <div className="flex items-center justify-between md:justify-center md:gap-12">
                         <button
-                            className="text-white/60 hover:text-white transition active:scale-90 md:hidden"
+                            className={`text-white/60 hover:text-white transition-all duration-150 md:hidden p-2 rounded-full hover:bg-white/10 ${
+                                buttonPressed === 'lyrics' ? 'scale-90' : 'scale-100'
+                            }`}
                             onClick={handleToggleLyrics}
+                            onMouseDown={() => setButtonPressed('lyrics')}
+                            onMouseUp={() => setButtonPressed(null)}
+                            onMouseLeave={() => setButtonPressed(null)}
+                            onTouchStart={() => setButtonPressed('lyrics')}
+                            onTouchEnd={() => setButtonPressed(null)}
                         >
                             <MessageSquareQuote size={24} className={isLyricsVisible ? 'text-white' : ''} />
                         </button>
 
                         <div className="flex items-center gap-6 md:gap-10">
-                            <button className="text-white/60 hover:text-white transition active:scale-90" onClick={playPrevious}>
-                                <SkipBack size={32} md:size={40} fill="currentColor" />
+                            <button 
+                                className={`text-white/60 hover:text-white transition-all duration-150 p-2 rounded-full hover:bg-white/5 ${
+                                    buttonPressed === 'prev' ? 'scale-90' : 'scale-100'
+                                }`}
+                                onClick={(e) => {
+                                    playPrevious();
+                                    setButtonPressed(null);
+                                }}
+                                onMouseDown={() => setButtonPressed('prev')}
+                                onMouseUp={() => setButtonPressed(null)}
+                                onMouseLeave={() => setButtonPressed(null)}
+                                onTouchStart={() => setButtonPressed('prev')}
+                                onTouchEnd={() => setButtonPressed(null)}
+                                aria-label="Previous song"
+                            >
+                                <SkipBack size={28} fill="currentColor" />
                             </button>
 
                             <button
-                                onClick={togglePlay}
-                                className="w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-white text-black hover:scale-105 active:scale-95 transition shadow-xl"
+                                onClick={(e) => {
+                                    togglePlay();
+                                    setButtonPressed(null);
+                                }}
+                                onMouseDown={() => setButtonPressed('play')}
+                                onMouseUp={() => setButtonPressed(null)}
+                                onMouseLeave={() => setButtonPressed(null)}
+                                onTouchStart={() => setButtonPressed('play')}
+                                onTouchEnd={() => setButtonPressed(null)}
+                                className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center bg-white text-black hover:shadow-2xl transition-all duration-150 shadow-xl ${
+                                    buttonPressed === 'play' ? 'scale-90' : 'hover:scale-105 scale-100'
+                                }`}
+                                aria-label={isPlaying ? "Pause" : "Play"}
                             >
                                 {isPlaying ? (
-                                    <Pause size={32} md:size={40} fill="black" />
+                                    <Pause size={28} fill="black" />
                                 ) : (
-                                    <Play size={32} md:size={40} fill="black" className="ml-1" />
+                                    <Play size={28} fill="black" className="ml-1" />
                                 )}
                             </button>
 
-                            <button className="text-white/60 hover:text-white transition active:scale-90" onClick={playNext}>
-                                <SkipForward size={32} md:size={40} fill="currentColor" />
+                            <button 
+                                className={`text-white/60 hover:text-white transition-all duration-150 p-2 rounded-full hover:bg-white/5 ${
+                                    buttonPressed === 'next' ? 'scale-90' : 'scale-100'
+                                }`}
+                                onClick={(e) => {
+                                    playNext();
+                                    setButtonPressed(null);
+                                }}
+                                onMouseDown={() => setButtonPressed('next')}
+                                onMouseUp={() => setButtonPressed(null)}
+                                onMouseLeave={() => setButtonPressed(null)}
+                                onTouchStart={() => setButtonPressed('next')}
+                                onTouchEnd={() => setButtonPressed(null)}
+                                aria-label="Next song"
+                            >
+                                <SkipForward size={28} fill="currentColor" />
                             </button>
                         </div>
 
                         <button
-                            className="text-white/60 hover:text-white transition active:scale-90 md:hidden"
+                            className={`text-white/60 hover:text-white transition-all duration-150 md:hidden p-2 rounded-full hover:bg-white/10 ${
+                                buttonPressed === 'queue' ? 'scale-90' : 'scale-100'
+                            }`}
                             onClick={handleToggleQueue}
+                            onMouseDown={() => setButtonPressed('queue')}
+                            onMouseUp={() => setButtonPressed(null)}
+                            onMouseLeave={() => setButtonPressed(null)}
+                            onTouchStart={() => setButtonPressed('queue')}
+                            onTouchEnd={() => setButtonPressed(null)}
                         >
                             <ListMusic size={24} className={isQueueVisible ? 'text-white' : ''} />
                         </button>

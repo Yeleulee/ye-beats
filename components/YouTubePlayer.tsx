@@ -384,7 +384,6 @@ export const YouTubePlayer: React.FC = () => {
         <div
             ref={containerRef}
             className="w-full h-full relative"
-            style={{ aspectRatio: '16 / 9' }}
         >
             <div 
                 id="youtube-player-mount" 
