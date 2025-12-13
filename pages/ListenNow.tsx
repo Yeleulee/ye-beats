@@ -6,8 +6,25 @@ import { getTrendingVideos, searchYouTube, getBillboardTopSongs } from '../servi
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
 import { ArtistCard } from '../components/ArtistCard';
+import { ArtistWithSongs } from '../components/ArtistWithSongs';
 
-
+// Helper function to group songs by artist
+const groupSongsByArtist = (songs: Song[]) => {
+    const grouped: { [artist: string]: Song[] } = {};
+    
+    songs.forEach(song => {
+        const artistName = song.artist;
+        if (!grouped[artistName]) {
+            grouped[artistName] = [];
+        }
+        grouped[artistName].push(song);
+    });
+    
+    // Convert to array and sort by number of songs (most popular artists first)
+    return Object.entries(grouped)
+        .map(([artist, songs]) => ({ artist, songs }))
+        .sort((a, b) => b.songs.length - a.songs.length);
+};
 
 export const ListenNow: React.FC = () => {
     const { playSong, setLyricsVisible, addToQueue } = usePlayer();
@@ -65,25 +82,32 @@ export const ListenNow: React.FC = () => {
         }
     };
 
-    // Billboard Artists Section with circular avatars
-    const BillboardArtistsSection = ({ title, songs }: { title: string, songs: Song[] }) => (
-        <div className="mb-10">
-            <div className="flex items-center justify-between px-5 mb-4">
-                <h2 className="text-[22px] font-bold text-white">{title}</h2>
-                <button className="text-[#FA2D48] text-sm font-medium">See All</button>
+    // Billboard Section - Artists with their songs (YouTube Music style)
+    const BillboardSection = ({ title, songs }: { title: string, songs: Song[] }) => {
+        const groupedArtists = groupSongsByArtist(songs);
+        
+        return (
+            <div className="mb-6">
+                <div className="flex items-center justify-between px-5 mb-4">
+                    <h2 className="text-[22px] font-bold text-white">{title}</h2>
+                    <button className="text-[#FA2D48] text-sm font-medium">See All</button>
+                </div>
+                
+                <div className="space-y-4">
+                    {groupedArtists.slice(0, 5).map((group, index) => (
+                        <ArtistWithSongs
+                            key={group.artist}
+                            artist={group.artist}
+                            artistImage={group.songs[0].coverUrl}
+                            songs={group.songs}
+                            onPlaySong={(song) => playSong(song)}
+                            onPlayAll={() => playSong(group.songs[0], group.songs.slice(1))}
+                        />
+                    ))}
+                </div>
             </div>
-            <div className="flex overflow-x-auto gap-5 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
-                {songs.map((song, i) => (
-                    <ArtistCard
-                        key={song.id || i}
-                        song={song}
-                        onClick={() => playSong(song)}
-                        onPlay={(e) => { e.stopPropagation(); playSong(song); }}
-                    />
-                ))}
-            </div>
-        </div>
-    );
+        );
+    };
 
     const Sections = ({ title, songs }: { title: string, songs: Song[] }) => (
         <div className="mb-10">
@@ -171,7 +195,7 @@ export const ListenNow: React.FC = () => {
                     </div>
                 ) : (
                     <>
-                        {topArtistsData.length > 0 && <BillboardArtistsSection title="Billboard Top 100" songs={topArtistsData} />}
+                        {topArtistsData.length > 0 && <BillboardSection title="Billboard Top 100" songs={topArtistsData} />}
                         {trending.length > 0 && <Sections title="Heavy Rotation" songs={[...trending].reverse()} />}
                         {trending.length > 0 && <Sections title="Top Picks" songs={trending} />}
                         

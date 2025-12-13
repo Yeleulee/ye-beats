@@ -1,18 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { Play, Mic2, Guitar, Headphones, Wind, Coffee, Speaker, Radio as RadioIcon, Signal, TrendingUp } from 'lucide-react';
+import { Play, Mic2, Guitar, Headphones, Wind, Coffee, Speaker, Radio as RadioIcon, Signal, TrendingUp, Heart, Zap, Sparkles, Music2 } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { searchYouTube, getTrendingVideos } from '../services/youtubeService';
 import { Song } from '../types';
 import { SongCard } from '../components/SongCard';
 
-const STATIONS = [
-    { id: 'pop', name: 'Pop Hits Radio', query: 'pop music radio 2024', icon: Mic2, color: 'from-pink-500 to-rose-500', image: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=800&q=80' },
-    { id: 'hiphop', name: 'Hip-Hop Station', query: 'hip hop radio live', icon: Speaker, color: 'from-orange-500 to-red-500', image: 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=800&q=80' },
-    { id: 'rock', name: 'Rock Classics', query: 'classic rock radio', icon: Guitar, color: 'from-purple-500 to-indigo-500', image: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=800&q=80' },
-    { id: 'electronic', name: 'EDM & Dance', query: 'edm radio live', icon: Headphones, color: 'from-cyan-500 to-blue-500', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80' },
-    { id: 'lofi', name: 'Lofi 24/7', query: 'lofi hip hop radio', icon: Coffee, color: 'from-green-500 to-emerald-500', image: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&q=80' },
-    { id: 'jazz', name: 'Smooth Jazz', query: 'smooth jazz radio', icon: Wind, color: 'from-amber-400 to-orange-500', image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&q=80' },
+const POPULAR_STATIONS = [
+    { id: 'top-hits', name: 'Top Hits Radio', query: 'top hits 2024 2025 music', icon: TrendingUp, color: 'from-red-500 via-pink-500 to-purple-600', image: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80' },
+    { id: 'your-mix', name: 'Your Daily Mix', query: 'trending music 2025 popular', icon: Sparkles, color: 'from-blue-500 via-indigo-500 to-purple-600', image: 'https://images.unsplash.com/photo-1514525253440-b393452e8d26?w=800&q=80' },
 ];
+
+const GENRE_STATIONS = [
+    { id: 'pop', name: 'Pop Hits', query: 'pop music 2024', icon: Mic2, color: 'from-pink-500 to-rose-500', image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800&q=80' },
+    { id: 'hiphop', name: 'Hip-Hop', query: 'hip hop rap music', icon: Speaker, color: 'from-orange-500 to-red-600', image: 'https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=800&q=80' },
+    { id: 'rock', name: 'Rock', query: 'rock music hits', icon: Guitar, color: 'from-purple-600 to-indigo-600', image: 'https://images.unsplash.com/photo-1498038432885-c6f3f1b912ee?w=800&q=80' },
+    { id: 'electronic', name: 'Electronic', query: 'electronic dance music edm', icon: Headphones, color: 'from-cyan-500 to-blue-600', image: 'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=800&q=80' },
+    { id: 'rb', name: 'R&B', query: 'rnb music soul', icon: Heart, color: 'from-rose-400 to-red-500', image: 'https://images.unsplash.com/photo-1472653431158-6364773b2a56?w=800&q=80' },
+    { id: 'indie', name: 'Indie', query: 'indie alternative music', icon: Music2, color: 'from-teal-500 to-green-500', image: 'https://images.unsplash.com/photo-1487180144351-b8472da7d491?w=800&q=80' },
+];
+
+const MOOD_STATIONS = [
+    { id: 'lofi', name: 'Lofi Beats', query: 'lofi hip hop chill', icon: Coffee, color: 'from-green-400 to-emerald-500', image: 'https://images.unsplash.com/photo-1518609878373-06d740f60d8b?w=800&q=80' },
+    { id: 'jazz', name: 'Jazz Vibes', query: 'smooth jazz relax', icon: Wind, color: 'from-amber-400 to-orange-500', image: 'https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?w=800&q=80' },
+    { id: 'workout', name: 'Workout', query: 'workout gym motivation music', icon: Zap, color: 'from-yellow-400 to-orange-500', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80' },
+    { id: 'chill', name: 'Chill Out', query: 'chill relaxing music', icon: Coffee, color: 'from-sky-400 to-blue-500', image: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&q=80' },
+];
+
+const ALL_STATIONS = [...POPULAR_STATIONS, ...GENRE_STATIONS, ...MOOD_STATIONS];
 
 export const Explore: React.FC = () => {
     const { playSong, setLyricsVisible, addToQueue } = usePlayer();
@@ -40,11 +54,11 @@ export const Explore: React.FC = () => {
     }, []);
 
     const playRandomStation = () => {
-        const randomStation = STATIONS[Math.floor(Math.random() * STATIONS.length)];
+        const randomStation = ALL_STATIONS[Math.floor(Math.random() * ALL_STATIONS.length)];
         playStation(randomStation);
     };
 
-    const playStation = async (station: typeof STATIONS[0]) => {
+    const playStation = async (station: typeof ALL_STATIONS[0]) => {
         setActiveStation(station.id);
         setLoading(true);
         try {
@@ -53,7 +67,6 @@ export const Explore: React.FC = () => {
             
             if (songs.length > 0) {
                 // SHUFFLE for true radio feel
-                // Filter out songs that might be "Stream Offline" or similar if possible (hard to detect by title alone)
                 const shuffled = [...songs].sort(() => 0.5 - Math.random());
                 
                 setStationSongs(shuffled);
@@ -62,7 +75,6 @@ export const Explore: React.FC = () => {
                 playSong(shuffled[0], shuffled.slice(1));
             } else {
                 console.warn("No songs found for station:", station.name);
-                // Fallback attempt?
             }
         } catch (e) {
             console.error("Radio Error:", e);
@@ -84,89 +96,235 @@ export const Explore: React.FC = () => {
             </div>
 
             <div className="p-5 animate-in fade-in duration-700 slide-in-from-bottom-4">
-                {/* Hero / Now Playing Station */}
-                <div className="mb-10 relative overflow-hidden rounded-2xl bg-[#1C1C1E] border border-white/5 shadow-2xl group">
-                     <div className="absolute inset-0 bg-gradient-to-r from-[#FA2D48]/20 to-transparent opacity-50" />
-                     <div className="absolute -right-20 -top-20 w-80 h-80 bg-[#FA2D48] rounded-full blur-[100px] opacity-20 pointer-events-none" />
+                {/* Enhanced Featured Hero Section */}
+                <div className="mb-10 relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1C1C1E] via-[#2C2C2E] to-[#1C1C1E] border border-white/10 shadow-2xl">
+                     {/* Animated Background Layers */}
+                     <div className="absolute inset-0 bg-gradient-to-r from-[#FA2D48]/20 via-purple-500/20 to-blue-500/20 opacity-50 animate-gradient-x" />
+                     <div className="absolute -right-20 -top-20 w-96 h-96 bg-[#FA2D48] rounded-full blur-[120px] opacity-20 pointer-events-none animate-pulse" />
+                     <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-purple-600 rounded-full blur-[120px] opacity-15 pointer-events-none" />
                      
-                     <div className="p-8 md:p-12 relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div>
-                            <div className="flex items-center gap-2 text-[#FA2D48] font-bold text-sm tracking-wider uppercase mb-2">
-                                <Signal size={16} className="animate-pulse" />
-                                Live Station
+                     <div className="p-6 md:p-10 relative z-10">
+                        {/* Top Section - Title & Description */}
+                        <div className="mb-8">
+                            <div className="flex items-center gap-2 text-[#FA2D48] font-bold text-xs tracking-widest uppercase mb-3">
+                                <Signal size={14} className="animate-pulse" />
+                                <span className="bg-[#FA2D48]/20 px-2 py-0.5 rounded-full border border-[#FA2D48]/30">Live Now</span>
                             </div>
-                            <h2 className="text-3xl md:text-5xl font-bold text-white mb-2 tracking-tight">
-                                Your Personal Mix
+                            <h2 className="text-4xl md:text-6xl font-black text-white mb-3 tracking-tight bg-gradient-to-r from-white to-white/80 bg-clip-text">
+                                Featured Stations
                             </h2>
-                            <p className="text-gray-400 text-lg max-w-lg mb-6 leading-relaxed">
-                                Endless music tailored to your taste. Discover new tracks and rediscover old favorites.
+                            <p className="text-gray-300 text-base md:text-lg max-w-2xl leading-relaxed">
+                                Discover handpicked radio stations playing non-stop music. From chart-toppers to genre-specific beats.
                             </p>
-                            <button 
+                        </div>
+
+                        {/* Featured Stations Carousel */}
+                        <div className="mb-6">
+                            <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar snap-x scroll-pl-5 -mx-2 px-2">
+                                {POPULAR_STATIONS.concat(GENRE_STATIONS.slice(0, 3)).map((station) => {
+                                    const Icon = station.icon;
+                                    return (
+                                        <div
+                                            key={station.id}
+                                            onClick={() => playStation(station)}
+                                            className="group flex-none w-64 md:w-72 snap-start cursor-pointer"
+                                        >
+                                            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden shadow-xl border border-white/10 bg-black">
+                                                {/* Station Image */}
+                                                <img
+                                                    src={station.image}
+                                                    alt={station.name}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                />
+                                                {/* Dark Overlay */}
+                                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-all" />
+                                                {/* Gradient Overlay */}
+                                                <div className={`absolute inset-0 bg-gradient-to-br ${station.color} opacity-40 mix-blend-overlay`} />
+                                                
+                                                {/* Loading State */}
+                                                {loading && activeStation === station.id && (
+                                                    <div className="absolute inset-0 bg-black/70 flex items-center justify-center backdrop-blur-sm z-20">
+                                                        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                                                    </div>
+                                                )}
+
+                                                {/* Content */}
+                                                <div className="absolute inset-0 p-5 flex flex-col justify-between">
+                                                    {/* Live Badge */}
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="bg-[#FA2D48] text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1.5">
+                                                            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                                                            Live
+                                                        </span>
+                                                        <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                                                            <Icon size={20} className="text-white" />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Station Info */}
+                                                    <div className="transform translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                                                        <h4 className="text-white text-xl font-bold mb-1 drop-shadow-lg">
+                                                            {station.name}
+                                                        </h4>
+                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-lg">
+                                                                <Play fill="black" size={14} className="text-black ml-0.5" />
+                                                            </div>
+                                                            <span className="text-sm font-semibold text-white/90">Tune In</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <button
                                 onClick={playRandomStation}
-                                className="bg-white text-black px-8 py-3 rounded-full font-bold text-lg hover:scale-105 active:scale-95 transition-all flex items-center gap-3 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                                className="flex-1 bg-white text-black px-6 py-4 rounded-2xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
                             >
                                 <Play fill="black" size={20} />
-                                Start Listening
+                                <span>Play Random Station</span>
                             </button>
-                        </div>
-                        {/* Visual Decoration */}
-                        <div className="hidden md:block w-48 h-48 relative">
-                             <div className="absolute inset-0 bg-gradient-to-tr from-[#FA2D48] to-purple-600 rounded-full animate-spin-slow blur-xl opacity-60" />
-                             <div className="absolute inset-2 bg-black rounded-full flex items-center justify-center border border-white/10">
-                                <RadioIcon size={64} className="text-white" />
-                             </div>
+                            <button
+                                onClick={() => playStation(POPULAR_STATIONS[0])}
+                                className="flex-1 bg-[#FA2D48] text-white px-6 py-4 rounded-2xl font-bold text-base hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(250,45,72,0.3)]"
+                            >
+                                <TrendingUp size={20} />
+                                <span>Top Hits Now</span>
+                            </button>
                         </div>
                      </div>
                 </div>
 
-                {/* Stations Grid */}
-                <h3 className="text-2xl font-bold text-white mb-6">Featured Stations</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                    {STATIONS.map((station) => (
-                        <div 
-                            key={station.id}
-                            onClick={() => playStation(station)}
-                            className="group relative aspect-square rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1"
-                        >
-                            <img 
-                                src={station.image} 
-                                alt={station.name}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            />
-                            <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
-                            
-                            {/* Gradient Overlay */}
-                            <div className={`absolute inset-0 bg-gradient-to-br ${station.color} opacity-30 group-hover:opacity-40 mix-blend-overlay transition-opacity`} />
-                            
-                            {/* Loading State Overlay */}
-                            {loading && activeStation === station.id && (
-                                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 backdrop-blur-sm">
-                                    <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                                </div>
-                            )}
-
-                            {/* Content */}
-                            <div className="absolute inset-0 p-5 flex flex-col justify-end">
-                                <span className="bg-white/10 backdrop-blur-md self-start px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-wider mb-auto border border-white/10">
-                                    Live
-                                </span>
+                {/* Popular Stations - Large Cards */}
+                <div className="mb-10">
+                    <h3 className="text-2xl font-bold text-white mb-4">Popular Now</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        {POPULAR_STATIONS.map((station) => (
+                            <div 
+                                key={station.id}
+                                onClick={() => playStation(station)}
+                                className="group relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1"
+                            >
+                                <img 
+                                    src={station.image} 
+                                    alt={station.name}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
                                 
-                                <div>
-                                    <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                        <h4 className="text-white text-xl md:text-2xl font-bold leading-tight mb-1 drop-shadow-md">
-                                            {station.name}
-                                        </h4>
-                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                            <div className="w-6 h-6 rounded-full bg-[#FA2D48] flex items-center justify-center">
-                                                <Play fill="white" size={10} className="text-white" />
+                                {/* Gradient Overlay */}
+                                <div className={`absolute inset-0 bg-gradient-to-br ${station.color} opacity-30 group-hover:opacity-40 mix-blend-overlay transition-opacity`} />
+                                
+                                {/* Loading State Overlay */}
+                                {loading && activeStation === station.id && (
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 backdrop-blur-sm">
+                                        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                )}
+
+                                {/* Content */}
+                                <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                                    <span className="bg-white/10 backdrop-blur-md self-start px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-wider mb-auto border border-white/10">
+                                        Live
+                                    </span>
+                                    
+                                    <div>
+                                        <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                            <h4 className="text-white text-2xl md:text-3xl font-bold leading-tight mb-2 drop-shadow-md">
+                                                {station.name}
+                                            </h4>
+                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                <div className="w-8 h-8 rounded-full bg-[#FA2D48] flex items-center justify-center">
+                                                    <Play fill="white" size={12} className="text-white" />
+                                                </div>
+                                                <span className="text-sm font-medium text-white/90">Tune In Now</span>
                                             </div>
-                                            <span className="text-sm font-medium text-white/90">Tune In</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))}
+                    </div>
+                </div>
+
+                {/* Genre Stations */}
+                <div className="mb-10">
+                    <h3 className="text-2xl font-bold text-white mb-4">Genres</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {GENRE_STATIONS.map((station) => (
+                            <div 
+                                key={station.id}
+                                onClick={() => playStation(station)}
+                                className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1"
+                            >
+                                <img 
+                                    src={station.image} 
+                                    alt={station.name}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
+                                <div className={`absolute inset-0 bg-gradient-to-br ${station.color} opacity-30 group-hover:opacity-40 mix-blend-overlay transition-opacity`} />
+                                
+                                {loading && activeStation === station.id && (
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 backdrop-blur-sm">
+                                        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                )}
+
+                                <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                                    <span className="bg-white/10 backdrop-blur-sm self-start px-2 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider border border-white/10">
+                                        Live
+                                    </span>
+                                    <h4 className="text-white text-lg md:text-xl font-bold leading-tight drop-shadow-md">
+                                        {station.name}
+                                    </h4>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Mood Stations */}
+                <div className="mb-10">
+                    <h3 className="text-2xl font-bold text-white mb-4">Moods & Activities</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {MOOD_STATIONS.map((station) => (
+                            <div 
+                                key={station.id}
+                                onClick={() => playStation(station)}
+                                className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1"
+                            >
+                                <img 
+                                    src={station.image} 
+                                    alt={station.name}
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                />
+                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
+                                <div className={`absolute inset-0 bg-gradient-to-br ${station.color} opacity-30 group-hover:opacity-40 mix-blend-overlay transition-opacity`} />
+                                
+                                {loading && activeStation === station.id && (
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 backdrop-blur-sm">
+                                        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
+                                    </div>
+                                )}
+
+                                <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                                    <span className="bg-white/10 backdrop-blur-sm self-start px-2 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider border border-white/10">
+                                        Live
+                                    </span>
+                                    <h4 className="text-white text-lg md:text-xl font-bold leading-tight drop-shadow-md">
+                                        {station.name}
+                                    </h4>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Recommended for You Section */}
@@ -219,7 +377,7 @@ export const Explore: React.FC = () => {
                 {/* Recent Tracks Section (if active) */}
                 {activeStation && stationSongs.length > 0 && (
                     <div className="mt-12">
-                        <h3 className="text-2xl font-bold text-white mb-6">Now Playing on {STATIONS.find(s => s.id === activeStation)?.name}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-6">Now Playing on {ALL_STATIONS.find(s => s.id === activeStation)?.name}</h3>
                         <div className="flex overflow-x-auto gap-4 pb-4 no-scrollbar">
                            {stationSongs.map((song) => (
                                 <SongCard

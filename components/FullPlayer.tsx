@@ -190,16 +190,15 @@ export const FullPlayer: React.FC = () => {
             </div>
 
             {/* Main Content - Responsive Layout */}
-            <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center px-6 md:px-12 pb-8 gap-8 md:gap-16 overflow-hidden max-w-screen-2xl mx-auto w-full">
+            <div className="relative z-10 flex-1 flex flex-col md:flex-row items-center justify-center px-4 md:px-8 pb-2 gap-4 md:gap-12 overflow-hidden max-w-screen-2xl mx-auto w-full">
 
                 {/* Left Side: Album Art / Video */}
                 <div className={`relative flex items-center justify-center transition-all duration-700 ease-[cubic-bezier(0.25,0.1,0.25,1)] 
                     ${isSideViewVisible ? 'md:w-1/2 md:scale-90' : 'md:w-full'} 
                     ${videoMode 
-                        ? 'w-full max-w-[90vw] md:max-w-[70vw] md:max-h-[60vh] shadow-[0_0_50px_rgba(0,0,0,0.5)]' 
-                        : 'aspect-square w-full max-w-[340px] md:max-w-[500px]'
+                        ? 'w-full max-w-[95vw] md:max-w-[80vw] aspect-video shadow-[0_0_50px_rgba(0,0,0,0.5)]' 
+                        : 'aspect-square w-full max-w-[85vw] md:max-w-[450px]'
                     }`}
-                    style={videoMode ? { aspectRatio: '16 / 9' } : {}}
                 >
 
                     {/* Album Art */}
@@ -207,17 +206,17 @@ export const FullPlayer: React.FC = () => {
                         <img
                             src={currentSong.coverUrl}
                             alt={currentSong.title}
-                            className={`w-full h-full rounded-2xl md:rounded-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] object-cover transition-transform duration-700 ${isPlaying ? 'scale-100' : 'scale-[0.9] opacity-80'}`}
+                            className={`w-full h-full rounded-xl md:rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] object-cover transition-transform duration-700 ${isPlaying ? 'scale-100' : 'scale-[0.9] opacity-80'}`}
                         />
                          {/* Subtle inner border/lighting for polish */}
-                        <div className="absolute inset-0 rounded-2xl md:rounded-3xl border border-white/10 pointer-events-none"></div>
+                        <div className="absolute inset-0 rounded-xl md:rounded-2xl border border-white/10 pointer-events-none"></div>
                         
                         {/* Reflection/Shine effect */}
-                         <div className="absolute inset-0 rounded-2xl md:rounded-3xl bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
+                         <div className="absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-tr from-white/5 to-transparent pointer-events-none"></div>
                     </div>
 
                     {/* YouTube Player Embed */}
-                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 overflow-hidden rounded-2xl md:rounded-3xl shadow-2xl bg-black border border-white/10 ${videoMode ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-[-1] pointer-events-none scale-90'}`}>
+                    <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 overflow-hidden rounded-xl md:rounded-2xl shadow-2xl bg-black border border-white/10 ${videoMode ? 'opacity-100 z-10 scale-100' : 'opacity-0 z-[-1] pointer-events-none scale-90'}`}>
                         <YouTubePlayer />
                     </div>
                 </div>
@@ -303,7 +302,7 @@ export const FullPlayer: React.FC = () => {
             </div>
 
             {/* Controls Section */}
-            <div className="relative z-30 w-full max-w-screen-xl mx-auto px-6 md:px-12 pb-8 md:pb-12 pt-8 md:pt-12 shrink-0">
+            <div className="relative z-30 w-full max-w-screen-xl mx-auto px-4 md:px-8 pb-6 md:pb-10 pt-1 md:pt-2 shrink-0">
                 <div className="flex flex-col gap-8">
 
                     {/* Song Info & Toggles */}
