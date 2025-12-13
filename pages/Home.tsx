@@ -6,6 +6,7 @@ import { getTrendingVideos, searchYouTube } from '../services/youtubeService';
 import { Song } from '../types';
 import { HeroSection } from '../components/HeroSection';
 import { SongCard } from '../components/SongCard';
+import { TopArtistsFeed, ArtistRanking, generateArtistRankings } from '../components/TopArtistsFeed';
 
 interface Props {
     onSearchPress: () => void;
@@ -24,6 +25,7 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
     const { playSong, setLyricsVisible, addToQueue } = usePlayer();
     const [recommended, setRecommended] = useState<Song[]>([]);
     const [trending, setTrending] = useState<Song[]>([]);
+    const [topArtists, setTopArtists] = useState<ArtistRanking[]>([]);
     const [loading, setLoading] = useState(true);
     
     // Sub-view state
@@ -42,6 +44,115 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
 
                 setRecommended(recData);
                 setTrending(trendData);
+
+                // Generate Top Artists with intelligent ranking
+                const curatedArtists = generateArtistRankings([
+                    {
+                        id: '1',
+                        name: 'The Weeknd',
+                        imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+                        genres: ['R&B', 'Pop'],
+                        globalPlayCount: 15000000,
+                        userListens: 120,
+                        topSong: 'Blinding Lights',
+                        color: '#E31C23'
+                    },
+                    {
+                        id: '2',
+                        name: 'Drake',
+                        imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop',
+                        genres: ['Hip-Hop', 'Rap'],
+                        globalPlayCount: 13500000,
+                        userListens: 95,
+                        topSong: 'God\'s Plan',
+                        color: '#FFA500'
+                    },
+                    {
+                        id: '3',
+                        name: 'Taylor Swift',
+                        imageUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'Country'],
+                        globalPlayCount: 14000000,
+                        userListens: 88,
+                        topSong: 'Anti-Hero',
+                        color: '#B794F4'
+                    },
+                    {
+                        id: '4',
+                        name: 'Bad Bunny',
+                        imageUrl: 'https://images.unsplash.com/photo-1571863533956-01c88e79957e?w=400&h=400&fit=crop',
+                        genres: ['Reggaeton', 'Latin'],
+                        globalPlayCount: 12000000,
+                        userListens: 72,
+                        topSong: 'Tití Me Preguntó',
+                        color: '#FF6B6B'
+                    },
+                    {
+                        id: '5',
+                        name: 'Billie Eilish',
+                        imageUrl: 'https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=400&h=400&fit=crop',
+                        genres: ['Alternative', 'Pop'],
+                        globalPlayCount: 11500000,
+                        userListens: 65,
+                        topSong: 'What Was I Made For?',
+                        color: '#4ADE80'
+                    },
+                    {
+                        id: '6',
+                        name: 'Ed Sheeran',
+                        imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'Folk'],
+                        globalPlayCount: 10800000,
+                        userListens: 58,
+                        topSong: 'Shape of You',
+                        color: '#F59E0B'
+                    },
+                    {
+                        id: '7',
+                        name: 'Dua Lipa',
+                        imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'Dance'],
+                        globalPlayCount: 10200000,
+                        userListens: 51,
+                        topSong: 'Levitating',
+                        color: '#EC4899'
+                    },
+                    {
+                        id: '8',
+                        name: 'Harry Styles',
+                        imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'Rock'],
+                        globalPlayCount: 9500000,
+                        userListens: 44,
+                        topSong: 'As It Was',
+                        color: '#8B5CF6'
+                    },
+                    {
+                        id: '9',
+                        name: 'Ariana Grande',
+                        imageUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'R&B'],
+                        globalPlayCount: 9200000,
+                        userListens: 40,
+                        topSong: 'Thank U, Next',
+                        color: '#FFC0CB'
+                    },
+                    {
+                        id: '10',
+                        name: 'Travis Scott',
+                        imageUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop',
+                        genres: ['Hip-Hop', 'Trap'],
+                        globalPlayCount: 8900000,
+                        userListens: 37,
+                        topSong: 'SICKO MODE',
+                        color: '#DC2626'
+                    }
+                ], {
+                    favoriteGenres: ['Pop', 'R&B', 'Hip-Hop'],
+                    recentListens: ['1', '2', '3']
+                });
+
+                setTopArtists(curatedArtists);
             } catch (e) {
                 console.error("Failed to load home data", e);
             } finally {
@@ -231,6 +342,27 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* Top Artists Feed - Enhanced Section */}
+                        <div className="mb-10 border-t border-white/5 pt-6">
+                            <TopArtistsFeed
+                                artists={topArtists}
+                                onArtistClick={async (artist) => {
+                                    // Search for artist's music and play
+                                    const songs = await searchYouTube(`${artist.name} ${artist.topSong || 'top songs'}`);
+                                    if (songs.length > 0) {
+                                        playSong(songs[0]);
+                                    }
+                                }}
+                                onPlayClick={async (artist) => {
+                                    // Play artist's top song
+                                    const songs = await searchYouTube(`${artist.name} ${artist.topSong || 'music'}`);
+                                    if (songs.length > 0) {
+                                        playSong(songs[0]);
+                                    }
+                                }}
+                            />
                         </div>
 
                         {/* Other Sections */}
