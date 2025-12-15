@@ -554,7 +554,7 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                             </div>
                         </div>
 
-                        {/* Featured New Releases - Premium Card Style */}
+                        {/* Featured New Releases - Enhanced Horizontal Scroll */}
                         <div className="mb-10">
                             <div className="px-5 mb-4">
                                 <div className="flex items-center justify-between">
@@ -565,28 +565,45 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                                     <ChevronRight size={20} className="text-gray-500" />
                                 </div>
                             </div>
-                            <div className="flex overflow-x-auto gap-5 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
+                            <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
                                 {trending.slice(0, 6).map((song) => (
-                                    <SongCard
+                                    <div 
                                         key={song.id}
-                                        song={song}
-                                        variant="premium"
-                                        showPopularity={true}
                                         onClick={() => playSong(song)}
-                                        onPlay={(e) => {
-                                            e.stopPropagation();
-                                            playSong(song);
-                                        }}
-                                        onViewLyrics={(e) => {
-                                            e.stopPropagation();
-                                            playSong(song);
-                                            setLyricsVisible(true);
-                                        }}
-                                        onAddToQueue={(e) => {
-                                            e.stopPropagation();
-                                            addToQueue(song);
-                                        }}
-                                    />
+                                        className="snap-start flex-none w-[160px] md:w-[180px] group cursor-pointer"
+                                    >
+                                        {/* Album Art with Hover Effect */}
+                                        <div className="relative aspect-square mb-3 overflow-hidden rounded-xl bg-[#1a1a1a] shadow-xl border border-white/5 group-hover:border-white/10 transition-all duration-300">
+                                            <img 
+                                                src={song.coverUrl} 
+                                                alt={song.title}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                            />
+                                            
+                                            {/* Gradient Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                            
+                                            {/* Play Button */}
+                                            <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300">
+                                                <div className="w-10 h-10 bg-[#FA2D48] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform">
+                                                    <Play size={16} fill="white" className="text-white ml-0.5" />
+                                                </div>
+                                            </div>
+
+                                            {/* New Badge */}
+                                            <div className="absolute top-2 left-2 bg-gradient-to-r from-[#FA2D48] to-purple-500 px-2 py-1 rounded-md">
+                                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">New</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Song Info */}
+                                        <h4 className="text-white font-semibold text-sm truncate mb-1 group-hover:text-[#FA2D48] transition-colors">
+                                            {song.title}
+                                        </h4>
+                                        <p className="text-gray-400 text-xs truncate">
+                                            {song.artist}
+                                        </p>
+                                    </div>
                                 ))}
                             </div>
                         </div>
@@ -875,7 +892,7 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                             </div>
                         </div>
 
-                        {/* Updated Playlists - Compact Grid */}
+                        {/* Updated Playlists - With Play All Button */}
                         <div className="mb-10">
                             <div className="px-5 mb-4">
                                 <div className="flex items-center justify-between">
@@ -893,7 +910,6 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                                     <SongCard
                                         key={song.id}
                                         song={song}
-                                        variant="compact"
                                         onClick={() => playSong(song)}
                                         onPlay={(e) => {
                                             e.stopPropagation();
