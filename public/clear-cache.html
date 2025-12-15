@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clear Ye-Beats Cache</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      .container {
+        background: white;
+        padding: 3rem;
+        border-radius: 1rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        max-width: 400px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 1rem;
+      }
+      button {
+        background: #fa2d48;
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+      }
+      button:hover {
+        background: #d91f3a;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(250, 45, 72, 0.4);
+      }
+      .status {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        display: none;
+      }
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        display: block;
+      }
+      .cache-info {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧹 Clear Cache</h1>
+      <p>Clear all cached music data to see fresh results with new filters</p>
+
+      <button onclick="clearCache()">Clear All Cache</button>
+
+      <div class="status" id="status"></div>
+
+      <div class="cache-info" id="cacheInfo"></div>
+    </div>
+
+    <script>
+      function displayCacheInfo() {
+        const keys = Object.keys(localStorage).filter((key) =>
+          key.startsWith("ye_beats_cache_")
+        );
+        const info = document.getElementById("cacheInfo");
+
+        if (keys.length === 0) {
+          info.innerHTML = "<strong>No cache found</strong>";
+        } else {
+          info.innerHTML = `<strong>Cached items:</strong><br>${
+            keys.length
+          } items<br><small>${keys
+            .map((k) => k.replace("ye_beats_cache_", ""))
+            .join(", ")}</small>`;
+        }
+      }
+
+      function clearCache() {
+        const keys = Object.keys(localStorage).filter((key) =>
+          key.startsWith("ye_beats_cache_")
+        );
+
+        keys.forEach((key) => localStorage.removeItem(key));
+
+        const status = document.getElementById("status");
+        status.className = "status success";
+        status.innerHTML = `✅ Successfully cleared ${keys.length} cached items!<br><small>Refresh your app to see new results</small>`;
+
+        displayCacheInfo();
+      }
+
+      displayCacheInfo();
+    </script>
+  </body>
+</html>
