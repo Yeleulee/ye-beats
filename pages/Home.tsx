@@ -713,6 +713,156 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                             </div>
                         </div>
 
+                        {/* Podcasts & Shows Section */}
+                        <div className="mb-10">
+                            <div className="px-5 mb-6">
+                                <div className="flex items-center justify-between mb-2">
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-white tracking-tight mb-1">Podcasts & Shows</h2>
+                                        <p className="text-sm text-gray-400">Discover music from top artists</p>
+                                    </div>
+                                    <ChevronRight size={20} className="text-gray-500" />
+                                </div>
+                            </div>
+
+                            {/* Female Artists Songs - Grid Layout */}
+                            <div className="mb-8">
+                                <div className="px-5 mb-4">
+                                    <h3 className="text-xl font-semibold text-white mb-1">Girls Songs Collection</h3>
+                                    <p className="text-sm text-gray-400">Top tracks from leading female artists</p>
+                                </div>
+                                <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
+                                    {[
+                                        { name: 'Taylor Swift', song: 'Anti-Hero', image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop&crop=faces', color: 'from-purple-500/20 to-pink-500/20' },
+                                        { name: 'Billie Eilish', song: 'What Was I Made For', image: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&crop=faces', color: 'from-green-400/20 to-emerald-500/20' },
+                                        { name: 'Dua Lipa', song: 'Levitating', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=faces', color: 'from-pink-500/20 to-rose-500/20' },
+                                        { name: 'Ariana Grande', song: 'Thank U Next', image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=400&fit=crop&crop=faces', color: 'from-rose-400/20 to-red-500/20' },
+                                        { name: 'SZA', song: 'Kill Bill', image: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=400&fit=crop&crop=faces', color: 'from-pink-500/20 to-purple-500/20' },
+                                        { name: 'Olivia Rodrigo', song: 'Vampire', image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=faces', color: 'from-purple-600/20 to-indigo-600/20' },
+                                        { name: 'Rihanna', song: 'Diamonds', image: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=400&h=400&fit=crop&crop=faces', color: 'from-red-500/20 to-pink-500/20' },
+                                        { name: 'Lana Del Rey', song: 'Summertime Sadness', image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&crop=faces', color: 'from-amber-500/20 to-orange-500/20' },
+                                        { name: 'Karol G', song: 'TQG', image: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=400&fit=crop&crop=faces', color: 'from-pink-600/20 to-red-600/20' },
+                                        { name: 'Aster Aweke', song: 'Tizita', image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&crop=faces', color: 'from-green-500/20 to-teal-500/20' }
+                                    ].map((artist, index) => (
+                                        <div
+                                            key={artist.name}
+                                            onClick={async () => {
+                                                const songs = await searchYouTube(`${artist.name} ${artist.song}`);
+                                                if (songs.length > 0) playSong(songs[0]);
+                                            }}
+                                            className="snap-start flex-none w-[180px] group cursor-pointer"
+                                        >
+                                            {/* Song Card */}
+                                            <div className={`relative aspect-square mb-3 overflow-hidden rounded-xl bg-gradient-to-br ${artist.color} border border-white/10 shadow-xl group-hover:border-white/20 transition-all duration-300`}>
+                                                <img
+                                                    src={artist.image}
+                                                    alt={artist.name}
+                                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                />
+                                                {/* Gradient Overlay */}
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-80"></div>
+                                                
+                                                {/* Play Button */}
+                                                <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300">
+                                                    <div className="w-12 h-12 bg-[#FA2D48] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform">
+                                                        <Play size={18} fill="white" className="text-white ml-0.5" />
+                                                    </div>
+                                                </div>
+
+                                                {/* Artist Info on Card */}
+                                                <div className="absolute bottom-3 left-3 right-16">
+                                                    <h4 className="text-white font-bold text-sm truncate mb-0.5">
+                                                        {artist.song}
+                                                    </h4>
+                                                    <p className="text-white/80 text-xs truncate">
+                                                        {artist.name}
+                                                    </p>
+                                                </div>
+
+                                                {/* Index Badge */}
+                                                <div className="absolute top-3 left-3 w-7 h-7 bg-black/60 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20">
+                                                    <span className="text-xs font-bold text-white">#{index + 1}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Artist Name Below */}
+                                            <div className="text-center">
+                                                <h4 className="text-white font-medium text-sm truncate group-hover:text-[#FA2D48] transition-colors">
+                                                    {artist.name}
+                                                </h4>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Male Artists Recommendations - Slider */}
+                            <div className="mb-8">
+                                <div className="px-5 mb-4">
+                                    <h3 className="text-xl font-semibold text-white mb-1">Recommended Male Artists</h3>
+                                    <p className="text-sm text-gray-400">Discover top tracks from these artists</p>
+                                </div>
+                                <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
+                                    {[
+                                        { name: 'The Weeknd', song: 'Blinding Lights', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=faces', genre: 'R&B, Pop', plays: '2.5B' },
+                                        { name: 'Drake', song: 'God\'s Plan', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop&crop=faces', genre: 'Hip-Hop', plays: '2.1B' },
+                                        { name: 'Ed Sheeran', song: 'Shape of You', image: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400&h=400&fit=crop&crop=faces', genre: 'Pop', plays: '1.8B' },
+                                        { name: 'Harry Styles', song: 'As It Was', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&crop=faces', genre: 'Pop Rock', plays: '1.4B' },
+                                        { name: 'Post Malone', song: 'Circles', image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=faces', genre: 'Hip-Hop', plays: '1.2B' },
+                                        { name: 'Burna Boy', song: 'Last Last', image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=faces', genre: 'Afrobeat', plays: '450M' },
+                                        { name: 'Bad Bunny', song: 'Tití Me Preguntó', image: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&h=400&fit=crop&crop=faces', genre: 'Reggaeton', plays: '890M' },
+                                        { name: 'Travis Scott', song: 'SICKO MODE', image: 'https://images.unsplash.com/photo-1495366691023-cc4eadcc2d7e?w=400&h=400&fit=crop&crop=faces', genre: 'Hip-Hop', plays: '1.1B' },
+                                        { name: 'Teddy Afro', song: 'Ethiopia', image: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&crop=faces', genre: 'Ethiopian', plays: '78M' },
+                                        { name: 'Wizkid', song: 'Essence', image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&crop=faces', genre: 'Afrobeat', plays: '320M' }
+                                    ].map((artist) => (
+                                        <div
+                                            key={artist.name}
+                                            onClick={async () => {
+                                                const songs = await searchYouTube(`${artist.name} ${artist.song}`);
+                                                if (songs.length > 0) playSong(songs[0]);
+                                            }}
+                                            className="snap-start flex-none w-[280px] group cursor-pointer"
+                                        >
+                                            {/* Artist Card - Horizontal Layout */}
+                                            <div className="bg-white/5 hover:bg-white/10 rounded-xl p-3 transition-all duration-300 border border-white/5 hover:border-white/10">
+                                                <div className="flex items-center gap-4">
+                                                    {/* Artist Photo */}
+                                                    <div className="relative flex-none w-20 h-20 rounded-lg overflow-hidden shadow-xl">
+                                                        <img
+                                                            src={artist.image}
+                                                            alt={artist.name}
+                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                        />
+                                                        {/* Play Overlay */}
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 flex items-center justify-center transition-all duration-300">
+                                                            <div className="w-10 h-10 bg-[#FA2D48] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all shadow-2xl">
+                                                                <Play size={16} fill="white" className="text-white ml-0.5" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Artist Info */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-white font-bold text-base truncate mb-1 group-hover:text-[#FA2D48] transition-colors">
+                                                            {artist.name}
+                                                        </h4>
+                                                        <p className="text-gray-400 text-sm truncate mb-0.5">
+                                                            {artist.song}
+                                                        </p>
+                                                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                            <span className="truncate">{artist.genre}</span>
+                                                            <span>•</span>
+                                                            <span>{artist.plays}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
                         {/* More to Explore List */}
                         <div className="px-5 mb-10">
                             <h2 className="text-[22px] font-bold text-white mb-2">More to Explore</h2>

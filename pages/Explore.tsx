@@ -201,58 +201,6 @@ export const Explore: React.FC = () => {
                      </div>
                 </div>
 
-                {/* Popular Stations - Large Cards */}
-                <div className="mb-10">
-                    <h3 className="text-2xl font-bold text-white mb-4">Popular Now</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        {POPULAR_STATIONS.map((station) => (
-                            <div 
-                                key={station.id}
-                                onClick={() => playStation(station)}
-                                className="group relative aspect-[16/9] rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1"
-                            >
-                                <img 
-                                    src={station.image} 
-                                    alt={station.name}
-                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                />
-                                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/50 transition-colors" />
-                                
-                                {/* Gradient Overlay */}
-                                <div className={`absolute inset-0 bg-gradient-to-br ${station.color} opacity-30 group-hover:opacity-40 mix-blend-overlay transition-opacity`} />
-                                
-                                {/* Loading State Overlay */}
-                                {loading && activeStation === station.id && (
-                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-20 backdrop-blur-sm">
-                                        <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                                    </div>
-                                )}
-
-                                {/* Content */}
-                                <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                                    <span className="bg-white/10 backdrop-blur-md self-start px-3 py-1 rounded-full text-xs font-bold text-white uppercase tracking-wider mb-auto border border-white/10">
-                                        Live
-                                    </span>
-                                    
-                                    <div>
-                                        <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                            <h4 className="text-white text-2xl md:text-3xl font-bold leading-tight mb-2 drop-shadow-md">
-                                                {station.name}
-                                            </h4>
-                                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <div className="w-8 h-8 rounded-full bg-[#FA2D48] flex items-center justify-center">
-                                                    <Play fill="white" size={12} className="text-white" />
-                                                </div>
-                                                <span className="text-sm font-medium text-white/90">Tune In Now</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
                 {/* Genre Stations */}
                 <div className="mb-10">
                     <h3 className="text-2xl font-bold text-white mb-4">Genres</h3>
