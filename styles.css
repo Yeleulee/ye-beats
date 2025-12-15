@@ -88,12 +88,60 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes bounce-subtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
 .animate-breathe {
   animation: breathe 20s infinite ease-in-out;
 }
 
 .animate-float {
   animation: float 6s infinite ease-in-out;
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite linear;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
 }
 
 .glass-panel {
@@ -122,4 +170,13 @@ body {
 
 .text-glow {
   text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+/* Premium Card Effects */
+.card-glow-hover {
+  transition: box-shadow 0.3s ease;
+}
+
+.card-glow-hover:hover {
+  box-shadow: 0 0 30px rgba(250, 45, 72, 0.3), 0 0 60px rgba(147, 51, 234, 0.2);
 }
