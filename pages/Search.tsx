@@ -63,30 +63,35 @@ export const Search: React.FC<Props> = ({ onBack }) => {
     }
   }, []);
 
-  // Instant search - search as you type
+  // Instant search - OPTIMIZED for YouTube Music speed
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
+    // Handle empty query
+    if (query.trim().length === 0) {
+      setShowSuggestions(false);
+      setResults([]);
+      setHasSearched(false);
+      setIsSearching(false);
+      return;
+    }
+
+    // Show suggestions immediately for better UX
     if (query.trim().length >= 2) {
-      // Show suggestions
       const filtered = [...SEARCH_SUGGESTIONS, ...searchHistory]
         .filter(s => s.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 6);
       setSuggestions(filtered);
       setShowSuggestions(true);
 
-      // Perform instant search after 500ms
+      // FASTER SEARCH - Reduced from 500ms to 300ms for YouTube Music feel
       searchTimeoutRef.current = setTimeout(() => {
         performInstantSearch(query);
-      }, 500);
+      }, 300); // ← Ultra-fast response
     } else {
       setShowSuggestions(false);
-      if (query.trim().length === 0) {
-        setResults([]);
-        setHasSearched(false);
-      }
     }
 
     return () => {
@@ -101,9 +106,13 @@ export const Search: React.FC<Props> = ({ onBack }) => {
     
     setIsSearching(true);
     setHasSearched(true);
+    
     try {
       const songs = await searchYouTube(searchQuery);
       setResults(songs);
+    } catch (error) {
+      console.error('Search error:', error);
+      setResults([]);
     } finally {
       setIsSearching(false);
     }
