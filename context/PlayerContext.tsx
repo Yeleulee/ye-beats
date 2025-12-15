@@ -1,8 +1,15 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 import { PlayerState, Song } from '../types';
 import { searchYouTube } from '../services/youtubeService';
+
+// Listening History Interface
+export interface ListeningHistoryEntry {
+  song: Song;
+  playedAt: number; // timestamp
+  playCount: number;
+}
 
 interface PlayerContextType extends PlayerState {
   playSong: (song: Song, newQueue?: Song[]) => void;
@@ -22,9 +29,57 @@ interface PlayerContextType extends PlayerState {
   addToQueue: (song: Song) => void;
   playNext: () => void;
   playPrevious: () => void;
+  listeningHistory: ListeningHistoryEntry[];
+  getRecentArtists: () => string[];
+  getMostPlayedGenres: () => string[];
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
+
+// Utility functions for history management
+const HISTORY_KEY = 'ye-beats-listening-history';
+const MAX_HISTORY_SIZE = 100;
+
+const saveHistory = (history: ListeningHistoryEntry[]) => {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY_SIZE)));
+  } catch (error) {
+    console.error('Failed to save listening history:', error);
+  }
+};
+
+const loadHistory = (): ListeningHistoryEntry[] => {
+  try {
+    const stored = localStorage.getItem(HISTORY_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Failed to load listening history:', error);
+    return [];
+  }
+};
+
+const addToHistory = (song: Song, currentHistory: ListeningHistoryEntry[]): ListeningHistoryEntry[] => {
+  const now = Date.now();
+  const existingIndex = currentHistory.findIndex(entry => entry.song.id === song.id);
+  
+  if (existingIndex !== -1) {
+    // Update existing entry
+    const updatedHistory = [...currentHistory];
+    updatedHistory[existingIndex] = {
+      ...updatedHistory[existingIndex],
+      playedAt: now,
+      playCount: updatedHistory[existingIndex].playCount + 1
+    };
+    return updatedHistory;
+  } else {
+    // Add new entry at the beginning
+    return [{
+      song,
+      playedAt: now,
+      playCount: 1
+    }, ...currentHistory];
+  }
+};
 
 export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<PlayerState>({
@@ -40,8 +95,25 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   });
 
   const [volume, setVolume] = useState(100);
+  const [listeningHistory, setListeningHistory] = useState<ListeningHistoryEntry[]>([]);
+
+  // Load history on mount
+  useEffect(() => {
+    const history = loadHistory();
+    setListeningHistory(history);
+  }, []);
+
+  // Save history whenever it changes
+  useEffect(() => {
+    if (listeningHistory.length > 0) {
+      saveHistory(listeningHistory);
+    }
+  }, [listeningHistory]);
 
   const playSong = (song: Song, newQueue?: Song[]) => {
+    // Track in listening history
+    setListeningHistory(prev => addToHistory(song, prev));
+    
     setState(prev => ({
       ...prev,
       currentSong: song,
@@ -58,6 +130,43 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       ...prev,
       queue: [...prev.queue, song]
     }));
+  };
+
+  // Get recent artists from history
+  const getRecentArtists = (): string[] => {
+    const artists = listeningHistory
+      .slice(0, 20) // Last 20 songs
+      .map(entry => entry.song.artist)
+      .filter((artist, index, self) => self.indexOf(artist) === index); // Unique artists
+    return artists.slice(0, 10); // Top 10 unique artists
+  };
+
+  // Get most played genres (extract from artist/album info)
+  const getMostPlayedGenres = (): string[] => {
+    // For now, we'll extract keywords from album names
+    // In a real app, you'd have genre metadata
+    const genreKeywords = [
+      'pop', 'rock', 'hip-hop', 'rap', 'r&b', 'rnb', 'jazz', 'classical',
+      'electronic', 'edm', 'country', 'folk', 'indie', 'alternative',
+      'reggae', 'latin', 'afrobeat', 'k-pop', 'soul'
+    ];
+    
+    const albumTexts = listeningHistory
+      .map(entry => `${entry.song.album} ${entry.song.artist}`.toLowerCase());
+    
+    const genreCounts: Record<string, number> = {};
+    albumTexts.forEach(text => {
+      genreKeywords.forEach(genre => {
+        if (text.includes(genre)) {
+          genreCounts[genre] = (genreCounts[genre] || 0) + 1;
+        }
+      });
+    });
+    
+    return Object.entries(genreCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([genre]) => genre);
   };
 
 
@@ -163,7 +272,10 @@ export const PlayerProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setLyricsVisible,
       addToQueue,
       playNext,
-      playPrevious
+      playPrevious,
+      listeningHistory,
+      getRecentArtists,
+      getMostPlayedGenres
     }}>
       {children}
     </PlayerContext.Provider>

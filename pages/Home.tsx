@@ -22,10 +22,11 @@ const EXPLORE_LINKS = [
 ];
 
 export const Home: React.FC<Props> = ({ onSearchPress }) => {
-    const { playSong, setLyricsVisible, addToQueue } = usePlayer();
+    const { playSong, setLyricsVisible, addToQueue, listeningHistory, getRecentArtists, getMostPlayedGenres } = usePlayer();
     const [recommended, setRecommended] = useState<Song[]>([]);
     const [trending, setTrending] = useState<Song[]>([]);
     const [topArtists, setTopArtists] = useState<ArtistRanking[]>([]);
+    const [personalizedSongs, setPersonalizedSongs] = useState<Song[]>([]);
     const [loading, setLoading] = useState(true);
     
     // Sub-view state
@@ -37,8 +38,34 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
         const fetchData = async () => {
             setLoading(true);
             try {
+                // Get personalized recommendations based on listening history
+                const recentArtists = getRecentArtists();
+                const mostPlayedGenres = getMostPlayedGenres();
+                
+                let personalizedData: Song[] = [];
+                
+                // If user has listening history, fetch personalized songs
+                if (recentArtists.length > 0) {
+                    console.log('🎵 Fetching personalized recommendations based on:', recentArtists);
+                    // Fetch songs from recent artists
+                    const artistQuery = recentArtists.slice(0, 3).join(' '); // Top 3 artists
+                    personalizedData = await searchYouTube(`${artistQuery} latest songs`);
+                } else {
+                    // Fallback to generic recommendations for new users
+                    console.log('🎵 New user - showing curated recommendations');
+                    personalizedData = await searchYouTube("trending music 2024 2025");
+                }
+                
+                setPersonalizedSongs(personalizedData);
+
+                // Fetch recommended and trending with genre preferences if available
+                let recQuery = "chill lofi beats";
+                if (mostPlayedGenres.length > 0) {
+                    recQuery = `${mostPlayedGenres[0]} ${mostPlayedGenres[1] || 'music'}`;
+                }
+
                 const [recData, trendData] = await Promise.all([
-                    searchYouTube("chill lofi beats"),
+                    searchYouTube(recQuery),
                     getTrendingVideos(),
                 ]);
 
@@ -554,6 +581,53 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                             </div>
                         </div>
 
+                        {/* Based on Your History Section - Personalized */}
+                        {personalizedSongs.length > 0 && (
+                            <div className="mb-10">
+                                <div className="px-5 mb-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 bg-[#FA2D48] rounded-full animate-pulse"></div>
+                                                <h2 className="text-2xl font-bold text-white tracking-tight">
+                                                    Based on your history
+                                                </h2>
+                                            </div>
+                                            <p className="text-sm text-gray-400">
+                                                {listeningHistory.length > 0 
+                                                    ? `Personalized for you • ${listeningHistory.length} songs played`
+                                                    : 'Discover new music'
+                                                }
+                                            </p>
+                                        </div>
+                                        <ChevronRight size={20} className="text-gray-500" />
+                                    </div>
+                                </div>
+                                <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
+                                    {personalizedSongs.map((song) => (
+                                        <SongCard
+                                            key={song.id}
+                                            song={song}
+                                            onClick={() => playSong(song)}
+                                            onPlay={(e) => {
+                                                e.stopPropagation();
+                                                playSong(song);
+                                            }}
+                                            onViewLyrics={(e) => {
+                                                e.stopPropagation();
+                                                playSong(song);
+                                                setLyricsVisible(true);
+                                            }}
+                                            onAddToQueue={(e) => {
+                                                e.stopPropagation();
+                                                addToQueue(song);
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Featured New Releases */}
                         <div className="mb-10">
                             <div className="px-5 mb-4">
@@ -596,7 +670,12 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <h2 className="text-2xl font-bold text-white tracking-tight mb-1">Listen again</h2>
-                                        <p className="text-sm text-gray-400">Artists you've been enjoying</p>
+                                        <p className="text-sm text-gray-400">
+                                            {listeningHistory.length > 0 
+                                                ? 'Songs you\'ve been enjoying' 
+                                                : 'Artists you might enjoy'
+                                            }
+                                        </p>
                                     </div>
                                     <div className="flex gap-2">
                                         <button className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
@@ -609,7 +688,57 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                                 </div>
                             </div>
                             <div className="flex overflow-x-auto gap-4 px-5 pb-4 no-scrollbar snap-x scroll-pl-5">
-                                {[
+                                {listeningHistory.length > 0 ? (
+                                    // Show actual listening history
+                                    listeningHistory.slice(0, 15).map((entry, index) => (
+                                        <div
+                                            key={entry.song.id + index}
+                                            onClick={() => playSong(entry.song)}
+                                            className="snap-start flex-none w-[140px] group cursor-pointer"
+                                        >
+                                            {/* Song/Artist Circle */}
+                                            <div className="relative w-[140px] h-[140px] mb-3">
+                                                <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-white/10 group-hover:border-white/30 transition-all shadow-2xl">
+                                                    <img
+                                                        src={entry.song.coverUrl}
+                                                        alt={entry.song.title}
+                                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                                    />
+                                                    {/* Play Overlay */}
+                                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all duration-300">
+                                                        <div className="w-14 h-14 bg-[#FA2D48] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300 shadow-2xl">
+                                                            <Play size={24} fill="white" className="text-white ml-1" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {/* Play count badge */}
+                                                {entry.playCount > 1 && (
+                                                    <div className="absolute -top-1 -right-1 bg-[#FA2D48] text-white text-xs font-bold px-2 py-0.5 rounded-full border-2 border-black">
+                                                        {entry.playCount}x
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Song Info */}
+                                            <div className="text-center">
+                                                <h4 className="text-white font-semibold text-[14px] truncate mb-1 group-hover:text-[#FA2D48] transition-colors">
+                                                    {entry.song.title.length > 20 
+                                                        ? entry.song.title.substring(0, 20) + '...' 
+                                                        : entry.song.title
+                                                    }
+                                                </h4>
+                                                <p className="text-gray-400 text-[12px] truncate mb-0.5">
+                                                    {entry.song.artist}
+                                                </p>
+                                                <p className="text-gray-500 text-[11px]">
+                                                    {new Date(entry.playedAt).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    // Fallback to default artists for new users
+                                    [
                                     { name: 'The Weeknd', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop&crop=faces', track: 'Blinding Lights', views: '1.2B' },
                                     { name: 'Drake', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop&crop=faces', track: 'God\'s Plan', views: '892M' },
                                     { name: 'Taylor Swift', image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop&crop=faces', track: 'Anti-Hero', views: '654M' },
@@ -657,7 +786,8 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                                             </p>
                                         </div>
                                     </div>
-                                ))}
+                                ))
+                                )}
                             </div>
                         </div>
 
