@@ -45,7 +45,7 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                 setRecommended(recData);
                 setTrending(trendData);
 
-                // Generate Top Artists with intelligent ranking
+                // Generate Top Artists with intelligent ranking - EXPANDED TO 25 ARTISTS
                 const curatedArtists = generateArtistRankings([
                     {
                         id: '1',
@@ -146,6 +146,157 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                         userListens: 37,
                         topSong: 'SICKO MODE',
                         color: '#DC2626'
+                    },
+                    // NEW ARTISTS - Expanding the list
+                    {
+                        id: '11',
+                        name: 'SZA',
+                        imageUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop',
+                        genres: ['R&B', 'Soul'],
+                        globalPlayCount: 8500000,
+                        userListens: 55,
+                        topSong: 'Kill Bill',
+                        color: '#FF69B4'
+                    },
+                    {
+                        id: '12',
+                        name: 'Post Malone',
+                        imageUrl: 'https://images.unsplash.com/photo-1571863533956-01c88e79957e?w=400&h=400&fit=crop',
+                        genres: ['Hip-Hop', 'Pop'],
+                        globalPlayCount: 8300000,
+                        userListens: 48,
+                        topSong: 'Circles',
+                        color: '#FFD700'
+                    },
+                    {
+                        id: '13',
+                        name: 'Olivia Rodrigo',
+                        imageUrl: 'https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'Alternative'],
+                        globalPlayCount: 8000000,
+                        userListens: 52,
+                        topSong: 'Vampire',
+                        color: '#9370DB'
+                    },
+                    {
+                        id: '14',
+                        name: 'Burna Boy',
+                        imageUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop',
+                        genres: ['Afrobeat', 'Reggae'],
+                        globalPlayCount: 7500000,
+                        userListens: 45,
+                        topSong: 'Last Last',
+                        color: '#228B22'
+                    },
+                    {
+                        id: '15',
+                        name: 'Wizkid',
+                        imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400&h=400&fit=crop',
+                        genres: ['Afrobeat', 'Pop'],
+                        globalPlayCount: 7200000,
+                        userListens: 42,
+                        topSong: 'Essence',
+                        color: '#FF8C00'
+                    },
+                    {
+                        id: '16',
+                        name: '21 Savage',
+                        imageUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop',
+                        genres: ['Hip-Hop', 'Trap'],
+                        globalPlayCount: 7000000,
+                        userListens: 38,
+                        topSong: 'a lot',
+                        color: '#8B0000'
+                    },
+                    {
+                        id: '17',
+                        name: 'Rihanna',
+                        imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop',
+                        genres: ['Pop', 'R&B'],
+                        globalPlayCount: 9800000,
+                        userListens: 62,
+                        topSong: 'Diamonds',
+                        color: '#FF1493'
+                    },
+                    {
+                        id: '18',
+                        name: 'Metro Boomin',
+                        imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+                        genres: ['Hip-Hop', 'Producer'],
+                        globalPlayCount: 6800000,
+                        userListens: 35,
+                        topSong: 'Creepin',
+                        color: '#4B0082'
+                    },
+                    {
+                        id: '19',
+                        name: 'NewJeans',
+                        imageUrl: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400&h=400&fit=crop',
+                        genres: ['K-Pop', 'Pop'],
+                        globalPlayCount: 6500000,
+                        userListens: 58,
+                        topSong: 'Ditto',
+                        color: '#FF69B4'
+                    },
+                    {
+                        id: '20',
+                        name: 'Peso Pluma',
+                        imageUrl: 'https://images.unsplash.com/photo-1571863533956-01c88e79957e?w=400&h=400&fit=crop',
+                        genres: ['Regional Mexican', 'Corridos'],
+                        globalPlayCount: 6200000,
+                        userListens: 41,
+                        topSong: 'Ella Baila Sola',
+                        color: '#DC143C'
+                    },
+                    {
+                        id: '21',
+                        name: 'Lana Del Rey',
+                        imageUrl: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop',
+                        genres: ['Alternative', 'Indie'],
+                        globalPlayCount: 5900000,
+                        userListens: 36,
+                        topSong: 'Summertime Sadness',
+                        color: '#8B4513'
+                    },
+                    {
+                        id: '22',
+                        name: 'Teddy Afro',
+                        imageUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop',
+                        genres: ['Ethiopian Traditional', 'Reggae'],
+                        globalPlayCount: 2500000,
+                        userListens: 75,
+                        topSong: 'Ethiopia',
+                        color: '#FFD700'
+                    },
+                    {
+                        id: '23',
+                        name: 'Aster Aweke',
+                        imageUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400&h=400&fit=crop',
+                        genres: ['Ethiopian Traditional', 'World Music'],
+                        globalPlayCount: 1800000,
+                        userListens: 68,
+                        topSong: 'Tizita',
+                        color: '#228B22'
+                    },
+                    {
+                        id: '24',
+                        name: 'Karol G',
+                        imageUrl: 'https://images.unsplash.com/photo-1494232410401-ad00d5433cfa?w=400&h=400&fit=crop',
+                        genres: ['Reggaeton', 'Latin Pop'],
+                        globalPlayCount: 7800000,
+                        userListens: 47,
+                        topSong: 'TQG',
+                        color: '#FF1493'
+                    },
+                    {
+                        id: '25',
+                        name: 'The Neighbourhood',
+                        imageUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop',
+                        genres: ['Alternative', 'Indie Rock'],
+                        globalPlayCount: 5500000,
+                        userListens: 32,
+                        topSong: 'Sweater Weather',
+                        color: '#696969'
                     }
                 ], {
                     favoriteGenres: ['Pop', 'R&B', 'Hip-Hop'],
