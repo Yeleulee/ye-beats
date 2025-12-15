@@ -581,6 +581,106 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                             </div>
                         </div>
 
+                        {/* Heavy Rotation Section - Top Songs with High Views */}
+                        <div className="mb-10">
+                            <div className="px-5 mb-4">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-2 h-2 bg-[#FA2D48] rounded-full animate-pulse"></div>
+                                                <div className="w-1.5 h-1.5 bg-[#FA2D48] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                                                <div className="w-1 h-1 bg-[#FA2D48] rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                                            </div>
+                                            <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                                                Heavy Rotation
+                                            </h2>
+                                        </div>
+                                        <p className="text-sm text-gray-400">Global hits • 100M - 1B+ views</p>
+                                    </div>
+                                    <div className="bg-gradient-to-r from-[#FA2D48] to-purple-500 text-white px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                                        Hot 🔥
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {/* Grid Layout for Heavy Rotation */}
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-5">
+                                {[
+                                    { title: 'Blinding Lights', artist: 'The Weeknd', views: '1.2B', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop', color: 'from-red-500/20 to-pink-500/20' },
+                                    { title: 'Shape of You', artist: 'Ed Sheeran', views: '6.2B', image: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400&h=400&fit=crop', color: 'from-orange-500/20 to-red-500/20' },
+                                    { title: 'Dance Monkey', artist: 'Tones and I', views: '3.9B', image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop', color: 'from-purple-500/20 to-pink-500/20' },
+                                    { title: 'Levitating', artist: 'Dua Lipa', views: '890M', image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop', color: 'from-pink-500/20 to-rose-500/20' },
+                                    { title: 'As It Was', artist: 'Harry Styles', views: '1.4B', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop', color: 'from-blue-500/20 to-purple-500/20' },
+                                    { title: 'Anti-Hero', artist: 'Taylor Swift', views: '654M', image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=400&h=400&fit=crop', color: 'from-indigo-500/20 to-purple-500/20' },
+                                    { title: 'Starboy', artist: 'The Weeknd ft. Daft Punk', views: '3.5B', image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop', color: 'from-red-600/20 to-orange-500/20' },
+                                    { title: 'Roses', artist: 'SAINt JHN (Imanbek Remix)', views: '1.8B', image: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop', color: 'from-rose-500/20 to-pink-500/20' },
+                                    { title: 'Peaches', artist: 'Justin Bieber ft. Daniel Caesar', views: '867M', image: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&h=400&fit=crop', color: 'from-yellow-500/20 to-orange-500/20' },
+                                    { title: 'Essence', artist: 'Wizkid ft. Tems', views: '320M', image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop', color: 'from-green-500/20 to-teal-500/20' },
+                                    { title: 'Stay', artist: 'The Kid LAROI & Justin Bieber', views: '2.1B', image: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop', color: 'from-cyan-500/20 to-blue-500/20' },
+                                    { title: 'Heat Waves', artist: 'Glass Animals', views: '1.9B', image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400&h=400&fit=crop', color: 'from-amber-500/20 to-yellow-500/20' }
+                                ].map((song, index) => (
+                                    <div
+                                        key={song.title + index}
+                                        onClick={async () => {
+                                            const songs = await searchYouTube(`${song.artist} ${song.title}`);
+                                            if (songs.length > 0) playSong(songs[0]);
+                                        }}
+                                        className="group cursor-pointer"
+                                    >
+                                        {/* Song Card */}
+                                        <div className={`relative aspect-square overflow-hidden rounded-xl bg-gradient-to-br ${song.color} border border-white/10 shadow-xl group-hover:border-white/20 transition-all duration-300 mb-3`}>
+                                            <img
+                                                src={song.image}
+                                                alt={song.title}
+                                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            />
+                                            {/* Dark Overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-80"></div>
+                                            
+                                            {/* View Count Badge - Top */}
+                                            <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md text-white px-2 py-1 rounded-full text-[10px] font-bold border border-white/20 flex items-center gap-1">
+                                                <span className="text-[#FA2D48]">▲</span>
+                                                {song.views}
+                                            </div>
+
+                                            {/* Play Button */}
+                                            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-300">
+                                                <div className="w-12 h-12 bg-[#FA2D48] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 active:scale-95 transition-transform">
+                                                    <Play size={18} fill="white" className="text-white ml-0.5" />
+                                                </div>
+                                            </div>
+
+                                            {/* Song Info on Card */}
+                                            <div className="absolute bottom-3 left-3 right-16">
+                                                <h4 className="text-white font-bold text-sm truncate mb-0.5">
+                                                    {song.title}
+                                                </h4>
+                                                <p className="text-white/80 text-xs truncate">
+                                                    {song.artist}
+                                                </p>
+                                            </div>
+
+                                            {/* Rank Badge */}
+                                            <div className="absolute top-2 left-2 w-7 h-7 bg-gradient-to-br from-[#FA2D48] to-purple-600 rounded-full flex items-center justify-center border-2 border-white/30 shadow-xl">
+                                                <span className="text-xs font-black text-white">#{index + 1}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Title Below - Hidden on mobile for cleaner look */}
+                                        <div className="hidden md:block">
+                                            <h4 className="text-white font-medium text-sm truncate group-hover:text-[#FA2D48] transition-colors">
+                                                {song.title}
+                                            </h4>
+                                            <p className="text-gray-400 text-xs truncate">
+                                                {song.artist}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Based on Your History Section - Personalized */}
                         {personalizedSongs.length > 0 && (
                             <div className="mb-10">
