@@ -39,50 +39,88 @@ const isRealSong = (item: any): boolean => {
   const minutes = parseInt((match?.[2] || "0M").replace("M", "")) || 0;
   const totalMinutes = hours * 60 + minutes;
 
-  // EXCLUDED PATTERNS - Compilation/Mix videos
+  // EXCLUDED PATTERNS - Compilation/Mix videos (EXPANDED LIST)
   const excludedKeywords = [
+    // Duration indicators
     "non stop",
-    "nonstop",
+    "nonstop", 
     "non-stop",
     "1 hour",
     "2 hour",
     "3 hour",
+    "4 hour",
+    "5 hour",
     "hours",
+    "hour mix",
+    "hour of",
+    // Mix/Compilation indicators
     "best of mix",
     "compilation",
     "megamix",
+    "mega mix",
     "extended mix",
     "super mix",
     "all songs",
     "full album mix",
+    "full album",
     "greatest hits mix",
+    "greatest hits",
     "top songs mix",
+    "top 10",
+    "top 20",
+    "top 50",
+    "top 100",
     "playlist mix",
+    "playlist",
     "continuous mix",
+    "continuous play",
     "mixed by",
     "dj mix",
+    "dj set",
+    "live mix",
+    "remix compilation",
+    "hits collection",
+    "best songs",
+    "all hits",
+    "music mix",
+    "songs mix",
+    // Other exclusions
+    "full concert",
+    "live concert",
+    "live performance",
+    "medley",
+    "mashup collection",
+    "back to back",
+    "b2b",
+    "radio mix",
+    "club mix",
+    "party mix",
+    "workout mix",
+    "gym mix",
   ];
 
   // Check if title contains any excluded keywords
   const hasExcludedKeyword = excludedKeywords.some(
-    (keyword) => title.includes(keyword) || description.includes(keyword)
+    (keyword) => title.includes(keyword) || description.slice(0, 200).includes(keyword)
   );
 
-  // EXCLUDED: Videos longer than 10 minutes (likely compilations)
-  const isTooLong = totalMinutes > 10;
+  // EXCLUDED: Videos longer than 8 minutes (likely compilations) - STRICTER LIMIT
+  const isTooLong = totalMinutes > 8;
 
-  // EXCLUDED: Videos shorter than 1 minute (likely intros/outros)
-  const isTooShort = totalMinutes < 1;
+  // EXCLUDED: Videos shorter than 1.5 minutes (likely intros/outros/shorts)
+  const isTooShort = totalMinutes < 1.5;
 
   // PRIORITY INDICATORS - Official content
   const officialIndicators = [
     "official",
     "vevo",
-    "audio",
-    "video",
+    "official audio",
+    "official video",
     "music video",
     "lyric video",
+    "lyrics",
     "visualizer",
+    "audio",
   ];
 
   const hasOfficialIndicator = officialIndicators.some(
@@ -387,48 +425,44 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
 };
 
 export const getBillboardTopSongs = async (): Promise<Song[]> => {
-  return fetchWithCache("billboard_top_100", async () => {
+  return fetchWithCache("billboard_top_100_v3", async () => {
     try {
       console.log("🏆 Fetching Billboard Top Artists' REAL songs...");
       
-      // Top Billboard artists (updated regularly)
-      const topArtists = [
-        "Taylor Swift",
-        "Drake",
-        "The Weeknd",
-        "SZA",
-        "Morgan Wallen",
-        "Miley Cyrus",
-        "Ed Sheeran",
-        "Doja Cat",
-        "Bad Bunny",
-        "Harry Styles",
-        "Rihanna",
-        "Ariana Grande",
-        "Billie Eilish",
-        "Post Malone",
-        "Travis Scott",
-        "Dua Lipa",
-        "Olivia Rodrigo",
-        "21 Savage",
-        "Metro Boomin",
-        "NewJeans"
+      // Top Billboard artists with their actual hit songs
+      const artistsWithHits = [
+        { artist: "Taylor Swift", song: "Anti-Hero" },
+        { artist: "The Weeknd", song: "Blinding Lights" },
+        { artist: "Drake", song: "Rich Flex" },
+        { artist: "SZA", song: "Kill Bill" },
+        { artist: "Dua Lipa", song: "Levitating" },
+        { artist: "Harry Styles", song: "As It Was" },
+        { artist: "Miley Cyrus", song: "Flowers" },
+        { artist: "Ed Sheeran", song: "Shape of You" },
+        { artist: "Billie Eilish", song: "What Was I Made For" },
+        { artist: "Post Malone", song: "I Like You" },
+        { artist: "Bad Bunny", song: "Titi Me Pregunto" },
+        { artist: "Ariana Grande", song: "7 Rings" },
+        { artist: "Olivia Rodrigo", song: "Vampire" },
+        { artist: "Travis Scott", song: "Sicko Mode" },
+        { artist: "Doja Cat", song: "Paint The Town Red" },
       ];
 
       const allSongs: Song[] = [];
       const processedVideoIds = new Set<string>();
 
-      // Fetch top songs from each artist
-      for (const artist of topArtists.slice(0, 10)) { // Limit to 10 artists to save quota
+      // Fetch specific songs from each artist
+      for (const { artist, song } of artistsWithHits.slice(0, 12)) {
         try {
-          console.log(`🎤 Fetching top song from ${artist}...`);
+          console.log(`🎤 Fetching "${song}" by ${artist}...`);
           
-          // Search for official songs from this artist
+          // Search for the SPECIFIC song - official audio/video
+          const searchQuery = `${artist} ${song} official audio`;
           const searchRes = await fetchYouTubeWithRotation(
             (key) =>
               `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(
-                artist + " official audio"
-              )}&type=video&maxResults=5&safeSearch=none&key=${key}`
+                searchQuery
+              )}&type=video&maxResults=3&videoDuration=short&safeSearch=none&key=${key}`
           );
 
           if (!searchRes.ok) continue;
@@ -453,7 +487,7 @@ export const getBillboardTopSongs = async (): Promise<Song[]> => {
           if (!detailsRes.ok) continue;
           const detailsData = await detailsRes.json();
 
-          // Filter for REAL songs only
+          // Filter for REAL songs only - strict filtering
           const validSongs = detailsData.items
             .filter((item: any) => {
               const status = item.status;
@@ -464,10 +498,10 @@ export const getBillboardTopSongs = async (): Promise<Song[]> => {
                 isPublic &&
                 notMadeForKids &&
                 uploadStatus &&
-                isRealSong(item) // ← Filter compilations
+                isRealSong(item) // ← Strict filter for compilations
               );
             })
-            .slice(0, 2); // Take top 2 songs per artist
+            .slice(0, 1); // Take only the TOP result per song
 
           validSongs.forEach((item: any) => {
             if (!processedVideoIds.has(item.id)) {
@@ -480,10 +514,10 @@ export const getBillboardTopSongs = async (): Promise<Song[]> => {
           });
 
           console.log(
-            `✅ Found ${validSongs.length} real songs from ${artist}`
+            `✅ Found ${validSongs.length} real song for ${artist} - ${song}`
           );
         } catch (err) {
-          console.error(`⚠️ Error fetching songs for ${artist}:`, err);
+          console.error(`⚠️ Error fetching song for ${artist}:`, err);
           continue;
         }
       }
