@@ -11,7 +11,6 @@ interface Props {
 export const BottomNav: React.FC<Props> = ({ currentTab, onTabChange }) => {
   const navItems = [
     { id: Tab.HOME, icon: House, label: 'Home' },
-    { id: Tab.NEW, icon: LayoutGrid, label: 'New' },
     { id: Tab.RADIO, icon: Radio, label: 'Radio' },
     { id: Tab.LIBRARY, icon: SquareLibrary, label: 'Library' },
     { id: Tab.SEARCH, icon: Search, label: 'Search' },

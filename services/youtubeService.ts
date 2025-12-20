@@ -217,7 +217,7 @@ const fetchWithCache = async <T>(
 };
 
 export const getPlaylistItems = async (playlistId: string): Promise<Song[]> => {
-  return fetchWithCache(`playlist_${playlistId}`, async () => {
+  return fetchWithCache(`playlist_${playlistId}_v4`, async () => {
     try {
       console.log(`🎼 Fetching playlist: ${playlistId}`);
       // Fetch playlist items with rotation
@@ -266,7 +266,7 @@ export const getPlaylistItems = async (playlistId: string): Promise<Song[]> => {
 
 export const searchYouTube = async (query: string): Promise<Song[]> => {
   // ENABLED Caching to save quota
-  const cacheKey = `search_v2_${encodeURIComponent(
+  const cacheKey = `search_v4_${encodeURIComponent(
     query.toLowerCase().trim()
   )}`;
 
@@ -377,7 +377,7 @@ export const searchYouTube = async (query: string): Promise<Song[]> => {
 };
 
 export const getTrendingVideos = async (): Promise<Song[]> => {
-  return fetchWithCache("trending_videos", async () => {
+  return fetchWithCache("trending_videos_v4", async () => {
     try {
       console.log("🔥 Fetching trending music videos...");
 
@@ -425,7 +425,7 @@ export const getTrendingVideos = async (): Promise<Song[]> => {
 };
 
 export const getBillboardTopSongs = async (): Promise<Song[]> => {
-  return fetchWithCache("billboard_top_100_v3", async () => {
+  return fetchWithCache("billboard_top_100_v4", async () => {
     try {
       console.log("🏆 Fetching Billboard Top Artists' REAL songs...");
       

@@ -11,7 +11,6 @@ interface Props {
 export const Sidebar: React.FC<Props> = ({ currentTab, onTabChange }) => {
     const navItems = [
         { id: Tab.HOME, icon: Home, label: 'Home' },
-        { id: Tab.NEW, icon: Compass, label: 'New' },
         { id: Tab.RADIO, icon: Play, label: 'Radio' },
         { id: Tab.LIBRARY, icon: Library, label: 'Library' },
         { id: Tab.SEARCH, icon: Search, label: 'Search' },

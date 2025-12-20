@@ -1,7 +1,21 @@
 export const getApiKeys = (): string[] => {
     const envKeys = process.env.YOUTUBE_API_KEY || '';
-    return envKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
+    const keys = envKeys.split(',').map(k => k.trim()).filter(k => k.length > 0);
+    return keys;
 };
+
+// Startup check - log whether keys are configured (NOT the actual keys!)
+const checkApiKeys = () => {
+    const keys = getApiKeys();
+    if (keys.length === 0) {
+        console.warn('⚠️ No YouTube API keys configured! Set YOUTUBE_API_KEY in environment variables.');
+    } else {
+        console.log(`✅ ${keys.length} YouTube API key(s) configured`);
+    }
+};
+
+// Run check on module load
+checkApiKeys();
 
 let currentKeyIndex = 0;
 

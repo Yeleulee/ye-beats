@@ -142,7 +142,7 @@ export const smartSearchYouTube = async (songTitle: string, artist: string): Pro
                 if (allValidSongs.length >= 2) break; 
 
             } catch (error) {
-                console.error(`Search failed for "${query}":`, error);
+                console.error(`Search failed for "${query}":`, error instanceof Error ? error.message : "Unknown error");
                 continue;
             }
         }
@@ -160,7 +160,7 @@ export const smartSearchYouTube = async (songTitle: string, artist: string): Pro
  * Get trending embeddable videos
  */
 export const getEmbeddableTrending = async (): Promise<Song[]> => {
-    return fetchWithCache('trending_smart', async () => {
+    return fetchWithCache('trending_smart_v4', async () => {
         try {
             const res = await fetchYouTubeWithRotation(key => 
                 `${BASE_URL}/videos?part=snippet,contentDetails,status&chart=mostPopular&videoCategoryId=10&maxResults=40&regionCode=US&key=${key}`
@@ -172,7 +172,7 @@ export const getEmbeddableTrending = async (): Promise<Song[]> => {
 
             return embeddableItems.slice(0, 20).map(mapYouTubeItemToSong);
         } catch (error) {
-            console.error("YouTube Trending Error:", error);
+            console.error("YouTube Trending Error:", error instanceof Error ? error.message : "Unknown error");
             return [];
         }
     });
