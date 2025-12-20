@@ -429,104 +429,87 @@ export const getBillboardTopSongs = async (): Promise<Song[]> => {
     try {
       console.log("🏆 Fetching Billboard Top Artists' REAL songs...");
       
-      // Top Billboard artists with their actual hit songs
+      // REDUCED to 6 artists to save quota (was 12)
       const artistsWithHits = [
         { artist: "Taylor Swift", song: "Anti-Hero" },
         { artist: "The Weeknd", song: "Blinding Lights" },
         { artist: "Drake", song: "Rich Flex" },
         { artist: "SZA", song: "Kill Bill" },
-        { artist: "Dua Lipa", song: "Levitating" },
         { artist: "Harry Styles", song: "As It Was" },
         { artist: "Miley Cyrus", song: "Flowers" },
-        { artist: "Ed Sheeran", song: "Shape of You" },
-        { artist: "Billie Eilish", song: "What Was I Made For" },
-        { artist: "Post Malone", song: "I Like You" },
-        { artist: "Bad Bunny", song: "Titi Me Pregunto" },
-        { artist: "Ariana Grande", song: "7 Rings" },
-        { artist: "Olivia Rodrigo", song: "Vampire" },
-        { artist: "Travis Scott", song: "Sicko Mode" },
-        { artist: "Doja Cat", song: "Paint The Town Red" },
       ];
 
       const allSongs: Song[] = [];
-      const processedVideoIds = new Set<string>();
+      const allVideoIds: string[] = [];
 
-      // Fetch specific songs from each artist
-      for (const { artist, song } of artistsWithHits.slice(0, 12)) {
+      // Step 1: Batch all searches together
+      for (const { artist, song } of artistsWithHits) {
         try {
-          console.log(`🎤 Fetching "${song}" by ${artist}...`);
+          console.log(`🎤 Searching \"${song}\" by ${artist}...`);
           
-          // Search for the SPECIFIC song - official audio/video
           const searchQuery = `${artist} ${song} official audio`;
           const searchRes = await fetchYouTubeWithRotation(
             (key) =>
               `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(
                 searchQuery
-              )}&type=video&maxResults=3&videoDuration=short&safeSearch=none&key=${key}`
+              )}&type=video&maxResults=1&videoDuration=short&safeSearch=none&key=${key}`
           );
 
           if (!searchRes.ok) continue;
           const searchData = await searchRes.json();
 
-          if (!searchData.items || searchData.items.length === 0) continue;
-
-          // Get video IDs
-          const videoIds = searchData.items
-            .map((item: any) => item.id.videoId)
-            .filter((id: string) => !processedVideoIds.has(id))
-            .join(",");
-
-          if (!videoIds) continue;
-
-          // Fetch video details
-          const detailsRes = await fetchYouTubeWithRotation(
-            (key) =>
-              `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${videoIds}&key=${key}`
-          );
-
-          if (!detailsRes.ok) continue;
-          const detailsData = await detailsRes.json();
-
-          // Filter for REAL songs only - strict filtering
-          const validSongs = detailsData.items
-            .filter((item: any) => {
-              const status = item.status;
-              const isPublic = status?.privacyStatus === "public";
-              const notMadeForKids = !status?.madeForKids;
-              const uploadStatus = status?.uploadStatus === "processed";
-              return (
-                isPublic &&
-                notMadeForKids &&
-                uploadStatus &&
-                isRealSong(item) // ← Strict filter for compilations
-              );
-            })
-            .slice(0, 1); // Take only the TOP result per song
-
-          validSongs.forEach((item: any) => {
-            if (!processedVideoIds.has(item.id)) {
-              processedVideoIds.add(item.id);
-              allSongs.push({
-                ...mapYouTubeItemToSong(item),
-                album: "Billboard Hot 100",
-              });
-            }
-          });
-
-          console.log(
-            `✅ Found ${validSongs.length} real song for ${artist} - ${song}`
-          );
+          if (searchData.items && searchData.items.length > 0) {
+            allVideoIds.push(searchData.items[0].id.videoId);
+          }
         } catch (err) {
-          console.error(`⚠️ Error fetching song for ${artist}:`, err);
+          console.error(`⚠️ Error searching for ${artist}:`, err);
           continue;
         }
       }
 
-      console.log(`🎵 Total Billboard songs collected: ${allSongs.length}`);
-      return allSongs.length > 0 ? allSongs : MOCK_SONGS;
+      if (allVideoIds.length === 0) {
+        console.warn("⚠️ No Billboard videos found, using mock data");
+        return MOCK_SONGS;
+      }
+
+      // Step 2: Fetch ALL video details in ONE batch request (saves quota!)
+      console.log(`📦 Fetching details for ${allVideoIds.length} videos in batch...`);
+      const detailsRes = await fetchYouTubeWithRotation(
+        (key) =>
+          `${BASE_URL}/videos?part=snippet,contentDetails,status&id=${allVideoIds.join(",")}&key=${key}`
+      );
+
+      if (!detailsRes.ok) {
+        console.error("❌ Failed to fetch video details");
+        return MOCK_SONGS;
+      }
+
+      const detailsData = await detailsRes.json();
+
+      // Filter for REAL songs only
+      const validSongs = detailsData.items
+        .filter((item: any) => {
+          const status = item.status;
+          const isPublic = status?.privacyStatus === "public";
+          const notMadeForKids = !status?.madeForKids;
+          const uploadStatus = status?.uploadStatus === "processed";
+          return (
+            isPublic &&
+            notMadeForKids &&
+            uploadStatus &&
+            isRealSong(item)
+          );
+        })
+        .map((item: any) => ({
+          ...mapYouTubeItemToSong(item),
+          album: "Billboard Hot 100",
+        }));
+
+      console.log(`✅ Billboard: ${validSongs.length} real songs collected`);
+      return validSongs.length > 0 ? validSongs : MOCK_SONGS;
     } catch (error) {
       console.error("💥 Billboard Fetch Error:", error);
       return MOCK_SONGS;
     }
-  }, 12); // Cache for 12 hours
+  }, 24); // Cache for 24 hours (increased from 12)
 };
