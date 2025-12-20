@@ -212,6 +212,35 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
                 </button>
             </div>
 
+            {/* DEV ONLY: Debug Indicator - shows connection status on localhost */}
+            {import.meta.env.DEV && (
+                <div className="mx-5 mb-2 mt-2 p-3 bg-gray-900/80 rounded-lg border border-white/10 text-xs text-gray-300 font-mono backdrop-blur-md">
+                   <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-white">SYSTEM STATUS</span>
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-bold ${!error && billboardSongs.length > 0 && billboardSongs[0].id !== 'mock-1' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {isLoading ? 'LOADING...' : error ? 'ERROR' : 'READY'}
+                        </div>
+                   </div>
+                   <div className="grid grid-cols-2 gap-2">
+                        <div>
+                            <span className="text-gray-500 block text-[10px]">API KEY</span>
+                            <span className={process.env.YOUTUBE_API_KEY ? "text-green-400" : "text-red-400"}>
+                                {process.env.YOUTUBE_API_KEY ? "✅ DETECTED" : "❌ MISSING"}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 block text-[10px]">DATA SOURCE</span>
+                            <span className={billboardSongs.length > 0 && billboardSongs[0].id === '1' ? "text-yellow-400" : "text-blue-400"}>
+                                {billboardSongs.length > 0 && billboardSongs[0].id === '1' ? "⚠️ MOCK DATA" : "✅ REAL API"}
+                            </span>
+                        </div>
+                   </div>
+                   <div className="mt-1 text-[10px] text-gray-600 truncate">
+                        Key: {process.env.YOUTUBE_API_KEY ? process.env.YOUTUBE_API_KEY.substring(0, 8) + '...' : 'None'}
+                   </div>
+                </div>
+            )}
+
             {/* Hero Header Area with Greeting */}
             <div className="px-5 pt-6 pb-8 bg-gradient-to-b from-white/5 to-transparent">
                 {/* Greeting */}
