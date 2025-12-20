@@ -213,7 +213,7 @@ export const Home: React.FC<Props> = ({ onSearchPress }) => {
             </div>
 
             {/* DEV ONLY: Debug Indicator - shows connection status on localhost */}
-            {import.meta.env.DEV && (
+            {process.env.NODE_ENV !== 'production' && (
                 <div className="mx-5 mb-2 mt-2 p-3 bg-gray-900/80 rounded-lg border border-white/10 text-xs text-gray-300 font-mono backdrop-blur-md">
                    <div className="flex items-center justify-between mb-1">
                         <span className="font-bold text-white">SYSTEM STATUS</span>

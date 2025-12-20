@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
+  
+  // Prioritize Vercel's process.env, fallback to local .env
+  const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY || env.YOUTUBE_API_KEY || '';
+
   return {
     server: {
       port: 3000,
@@ -11,7 +15,7 @@ export default defineConfig(({ mode }) => {
     },
     plugins: [react()],
     define: {
-      'process.env.YOUTUBE_API_KEY': JSON.stringify(env.YOUTUBE_API_KEY)
+      'process.env.YOUTUBE_API_KEY': JSON.stringify(YOUTUBE_API_KEY)
     },
     resolve: {
       alias: {
